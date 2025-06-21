@@ -35,6 +35,9 @@ importers:
       vite:
         specifier: ^6.3.5
         version: 6.3.5(jiti@2.4.2)
+      wgpu-matrix:
+        specifier: ^3.4.0
+        version: 3.4.0
 
 packages:
 
@@ -844,6 +847,9 @@ packages:
       typescript:
         optional: true
 
+  wgpu-matrix@3.4.0:
+    resolution: {integrity: sha512-kXHrbAPKEn9A32Wf4wVldyx9MmnzwhuB5p8GCqoJP3ItU5+iDT4J3aTQwPZWkfb153hwGtqZtUwR2M+ipJKadg==}
+
   zimmerframe@1.1.2:
     resolution: {integrity: sha512-rAbqEGa8ovJy4pyBxZM70hg4pE6gDgaQ0Sl9M3enG3I0d6H4XSAM3GeNGLKnsBpuijUow064sf7ww1nutC5/3w==}
 
@@ -1644,5 +1650,7 @@ snapshots:
       '@vue/shared': 3.5.17
     optionalDependencies:
       typescript: 5.8.3
+
+  wgpu-matrix@3.4.0: {}
 
   zimmerframe@1.1.2: {}

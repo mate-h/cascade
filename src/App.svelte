@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import ECSPanel from "./components/ECSPanel.svelte";
   import CanvasPanel from "./components/CanvasPanel.svelte";
-  import { initializeApp } from "./app";
+  import { initializeApp, stopApp } from "./app";
   import type { AppState } from "./app";
 
   let appState = $state<AppState | null>(null);
@@ -14,6 +14,13 @@
     } catch (err) {
       error = `Failed to initialize: ${err}`;
       console.error("App initialization failed:", err);
+    }
+  });
+
+  onDestroy(() => {
+    if (appState) {
+      stopApp(appState);
+      appState = null;
     }
   });
 </script>
