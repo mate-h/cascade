@@ -1,30 +1,52 @@
-<script>
-  import ComponentCard from './ComponentCard.svelte'
-  import { getEntityComponents } from '../utils/ecs'
+<script lang="ts">
+  import ComponentCard from "./ComponentCard.svelte";
+  import { getEntityComponents } from "../utils/ecs";
 
-  let { entityId, ecs } = $props()
+  let {
+    entityId,
+    ecs,
+    isSelected = false,
+    isHighlighted = false,
+    onSelect,
+  } = $props();
 
-  let isHighlighted = $state(false)
-  
-  const components = $derived(getEntityComponents(entityId, ecs))
+  const components = $derived(getEntityComponents(entityId, ecs));
 
-  export function highlight() {
-    isHighlighted = true
-    setTimeout(() => {
-      isHighlighted = false
-    }, 3000)
+  function handleClick() {
+    if (onSelect) {
+      onSelect();
+    }
   }
 </script>
 
-<div 
-  class="entity-card {isHighlighted ? 'entity-highlighted' : ''}"
+<div
+  class="entity-card cursor-pointer transition-all duration-200"
+  class:entity-selected={isSelected}
+  class:entity-highlighted={isHighlighted}
+  class:hover:bg-dark-panel={!isSelected}
   data-entity-id={entityId}
+  onclick={handleClick}
+  role="button"
+  tabindex="0"
+  onkeydown={(e) => e.key === "Enter" && handleClick()}
 >
-  <div class="text-entity-primary font-semibold mb-1">
-    Entity {entityId}
+  <div
+    class="text-entity-primary font-semibold mb-1 flex items-center justify-between"
+  >
+    <span>Entity {entityId}</span>
+    {#if isSelected}
+      <span class="text-xs text-entity-success">Selected</span>
+    {:else if isHighlighted}
+      <span class="text-xs text-entity-warning">Dependency</span>
+    {/if}
   </div>
-  
+
   {#each Array.from(components) as [componentType, component] (componentType)}
-    <ComponentCard {componentType} {component} {ecs} />
+    <ComponentCard
+      {componentType}
+      {component}
+      {ecs}
+      onEntitySelect={onSelect}
+    />
   {/each}
-</div> 
+</div>

@@ -1,12 +1,14 @@
-import type { ECS, EntityID, ComponentType } from '../ecs/types';
+import type { ECS, EntityID, ComponentType } from "../ecs/types";
 
 // Get ECS statistics
-export const getECSStats = (ecs: ECS): { entities: number; components: number } => {
+export const getECSStats = (
+  ecs: ECS,
+): { entities: number; components: number } => {
   let totalComponents = 0;
   for (const componentMap of ecs.components.values()) {
     totalComponents += componentMap.size;
   }
-  
+
   return {
     entities: ecs.entities.size,
     components: totalComponents,
@@ -33,9 +35,12 @@ export const serializeECS = (ecs: ECS): any => {
 };
 
 // Get all components for a specific entity
-export const getEntityComponents = (entityId: EntityID, ecs: ECS): Map<ComponentType, any> => {
+export const getEntityComponents = (
+  entityId: EntityID,
+  ecs: ECS,
+): Map<ComponentType, any> => {
   const entityComponents = new Map<ComponentType, any>();
-  
+
   // Iterate through all component types
   for (const [componentType, componentMap] of ecs.components) {
     const component = componentMap.get(entityId);
@@ -43,7 +48,7 @@ export const getEntityComponents = (entityId: EntityID, ecs: ECS): Map<Component
       entityComponents.set(componentType, component);
     }
   }
-  
+
   return entityComponents;
 };
 
@@ -56,7 +61,7 @@ const isEntityReference = (value: any, key: string, ecs: ECS): boolean => {
   // Only treat numbers as entity references in these specific fields
   const entityReferenceFields = [
     "inputs",
-    "outputs", 
+    "outputs",
     "dependencies",
     "targets",
     "sources",
@@ -102,4 +107,4 @@ export const formatComponentData = (component: any, ecs: ECS): string => {
 
   const hasMore = Object.keys(component).length > 5;
   return entries + (hasMore ? ", ..." : "");
-}; 
+};

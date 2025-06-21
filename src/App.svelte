@@ -1,23 +1,26 @@
-<script>
-  import { onMount } from 'svelte'
-  import ECSPanel from './components/ECSPanel.svelte'
-  import CanvasPanel from './components/CanvasPanel.svelte'
-  import { initializeApp } from './app'
+<script lang="ts">
+  import { onMount } from "svelte";
+  import ECSPanel from "./components/ECSPanel.svelte";
+  import CanvasPanel from "./components/CanvasPanel.svelte";
+  import { initializeApp } from "./app";
+  import type { AppState } from "./app";
 
-  let appState = $state(null)
-  let error = $state(null)
+  let appState = $state<AppState | null>(null);
+  let error = $state<string | null>(null);
 
   onMount(async () => {
     try {
-      appState = await initializeApp()
+      appState = await initializeApp();
     } catch (err) {
-      error = `Failed to initialize: ${err}`
-      console.error('App initialization failed:', err)
+      error = `Failed to initialize: ${err}`;
+      console.error("App initialization failed:", err);
     }
-  })
+  });
 </script>
 
-<main class="flex w-screen h-screen bg-black font-mono text-[13px] leading-[1.4]">
+<main
+  class="relative w-screen h-screen bg-black font-mono text-[13px] leading-[1.4]"
+>
   {#if error}
     <div class="flex justify-center items-center h-full w-full text-white">
       <div class="text-center">
@@ -26,8 +29,10 @@
       </div>
     </div>
   {:else if appState}
-    <ECSPanel {appState} />
+    <!-- Fullscreen Canvas -->
     <CanvasPanel {appState} />
+    <!-- Collapsible Panel Overlay -->
+    <ECSPanel {appState} />
   {:else}
     <div class="flex justify-center items-center h-full w-full text-white">
       <div class="text-center">
@@ -36,4 +41,4 @@
       </div>
     </div>
   {/if}
-</main> 
+</main>
