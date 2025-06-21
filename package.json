@@ -1,6 +1,6 @@
 {
-  "name": "erosion",
-  "version": "0.0.0",
+  "name": "cascade-engine",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {

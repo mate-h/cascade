@@ -1,4 +1,6 @@
-# WebGPU + ECS + Svelte 3D Application
+<img src="./public/cascade-logo.svg" alt="Cascade Engine Logo" width="100" height="100" />
+
+# Cascade Engine
 
 A modern 3D web application built with **WebGPU**, **Entity Component System (ECS)** architecture, and **Svelte 5**. Features a functional programming approach with real-time 3D rendering, orbit controls, and an interactive ECS entity inspector.
 
