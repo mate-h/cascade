@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount, onDestroy } from "svelte";
   import { getEntityComponents } from "../utils/ecs";
   import { selectedEntityId } from "../stores/selection";
   import {
@@ -6,8 +7,45 @@
     isEditableProperty,
   } from "../utils/property-config";
   import PropertyEditor, { type PropertyConfig } from "./PropertyEditor.svelte";
+  import { panelStore, createResizeHandler } from "../stores/panels";
 
-  let { appState, isCollapsed = true } = $props();
+  let { appState } = $props();
+
+  // Use panel store for collapse state and width
+  let panelWidth = $state(0);
+  let isResizing = $state(false);
+  let resizeHandler: ReturnType<typeof createResizeHandler> | null = null;
+
+  // Subscribe to panel store
+  $effect(() => {
+    const unsubscribe = panelStore.subscribe(sizes => {
+      panelWidth = sizes.propertiesPanel.width;
+    });
+    return unsubscribe;
+  });
+
+  // Track resize state for styling
+  $effect(() => {
+    if (resizeHandler) {
+      const checkResize = () => {
+        isResizing = resizeHandler?.isResizing || false;
+        if (isResizing) {
+          requestAnimationFrame(checkResize);
+        }
+      };
+      requestAnimationFrame(checkResize);
+    }
+  });
+
+  onMount(() => {
+    resizeHandler = createResizeHandler('propertiesPanel', (width) => {
+      panelWidth = width;
+    });
+  });
+
+  onDestroy(() => {
+    resizeHandler?.cleanup();
+  });
 
   const selectedEntityComponents = $derived(
     $selectedEntityId !== null
@@ -19,7 +57,7 @@
   let selectedProperty: PropertyConfig | null = $state(null);
 
   function togglePanel() {
-    isCollapsed = !isCollapsed;
+    panelStore.togglePanel('propertiesPanel');
   }
 
   // Keyboard shortcut handler
@@ -138,24 +176,34 @@
 <button
   class="fixed top-2 right-2 z-50 bg-bg-panel border border-border-default text-text-primary p-1 rounded shadow-lg hover:bg-bg-overlay size-6"
   onclick={togglePanel}
-  title={isCollapsed
+  title={$panelStore.propertiesPanel.isCollapsed
     ? "Show Properties Panel (T)"
     : "Hide Properties Panel (T)"}
 >
-  {isCollapsed ? "⚙️" : "✕"}
+  {$panelStore.propertiesPanel.isCollapsed ? "⚙️" : "✕"}
 </button>
 
 <!-- Collapsible Properties Panel -->
 <div
-  class="fixed top-0 right-0 h-full bg-bg-primary/95 backdrop-blur-sm border-l border-border-default z-40"
-  class:w-80={!isCollapsed}
-  class:w-0={isCollapsed}
-  class:overflow-hidden={isCollapsed}
+  class="fixed top-0 right-0 h-full bg-bg-primary/95 backdrop-blur-sm z-40 flex"
+  style:width={$panelStore.propertiesPanel.isCollapsed ? "0px" : `${panelWidth}px`}
+  class:overflow-hidden={$panelStore.propertiesPanel.isCollapsed}
 >
+  <!-- Resize Handle Border -->
+  {#if !$panelStore.propertiesPanel.isCollapsed}
+    <div
+      class="w-1 bg-border-default hover:bg-accent-blue cursor-col-resize transition-colors duration-150 ease-in-out flex-shrink-0"
+      class:bg-accent-blue={isResizing}
+      class:w-2={isResizing}
+      onmousedown={(e) => resizeHandler?.startResize(e, panelWidth)}
+      title="Drag to resize panel"
+    ></div>
+  {/if}
+  
   <div
-    class="p-2 h-full overflow-y-auto"
-    class:opacity-0={isCollapsed}
-    class:pointer-events-none={isCollapsed}
+    class="p-2 h-full overflow-y-auto flex-1"
+    class:opacity-0={$panelStore.propertiesPanel.isCollapsed}
+    class:pointer-events-none={$panelStore.propertiesPanel.isCollapsed}
   >
     <h2 class="text-text-bright mb-2 text-sm font-semibold mt-8">Properties</h2>
 

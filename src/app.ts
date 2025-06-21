@@ -94,25 +94,32 @@ export const initializeApp = async (): Promise<AppState> => {
   // Create ECS with 3D scene using canvas buffer dimensions
   const ecs = create3DScene(initialDimensions.canvasWidth, initialDimensions.canvasHeight);
 
-  // Setup resize handling with HiDPI support
-  const handleResize = () => {
-    const newDimensions = calculateCanvasDimensions(window.innerWidth, window.innerHeight);
-    configureCanvasForHiDPI(canvas, newDimensions);
-    
-    resize3DSystem(appState.ecs, appState.gpu, newDimensions.canvasWidth, newDimensions.canvasHeight);
-    appState.ecs = create3DScene(newDimensions.canvasWidth, newDimensions.canvasHeight);
-  };
-
-  window.addEventListener("resize", handleResize);
-
-  // Create app state
+  // Create app state first
   const appState: AppState = {
     ecs,
     gpu,
     lastFrameTime: performance.now(),
     isRunning: true,
-    resizeHandler: handleResize,
   };
+
+  // Setup resize handling with HiDPI support
+  const handleResize = () => {
+    const newDimensions = calculateCanvasDimensions(window.innerWidth, window.innerHeight);
+    configureCanvasForHiDPI(canvas, newDimensions);
+    
+    // Reconfigure WebGPU context after canvas resize
+    const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
+    appState.gpu.context.configure({
+      device: appState.gpu.device,
+      format: canvasFormat,
+    });
+    
+    // Only update camera and depth texture, don't recreate the scene
+    resize3DSystem(appState.ecs, appState.gpu, newDimensions.canvasWidth, newDimensions.canvasHeight);
+  };
+
+  window.addEventListener("resize", handleResize);
+  appState.resizeHandler = handleResize;
 
   // Start game loop
   gameLoop(appState);

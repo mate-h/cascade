@@ -1,7 +1,9 @@
 <script lang="ts">
+  import { onMount, onDestroy } from "svelte";
   import EntityCard from "./EntityCard.svelte";
   import { getECSStats, serializeECS } from "../utils/ecs";
   import { selectedEntityId, selectEntity } from "../stores/selection";
+  import { panelStore, createResizeHandler } from "../stores/panels";
 
   let { appState } = $props();
 
@@ -9,7 +11,42 @@
   let isLoading = $state(false);
   let buttonIcon = $state("📋");
   let highlightedEntities = $state(new Set<number>());
-  let isCollapsed = $state(true);
+  
+  // Use panel store for collapse state and width
+  let panelWidth = $state(0);
+  let isResizing = $state(false);
+  let resizeHandler: ReturnType<typeof createResizeHandler> | null = null;
+
+  // Subscribe to panel store
+  $effect(() => {
+    const unsubscribe = panelStore.subscribe(sizes => {
+      panelWidth = sizes.ecsPanel.width;
+    });
+    return unsubscribe;
+  });
+
+  // Track resize state for styling
+  $effect(() => {
+    if (resizeHandler) {
+      const checkResize = () => {
+        isResizing = resizeHandler?.isResizing || false;
+        if (isResizing) {
+          requestAnimationFrame(checkResize);
+        }
+      };
+      requestAnimationFrame(checkResize);
+    }
+  });
+
+  onMount(() => {
+    resizeHandler = createResizeHandler('ecsPanel', (width) => {
+      panelWidth = width;
+    });
+  });
+
+  onDestroy(() => {
+    resizeHandler?.cleanup();
+  });
 
   // Keyboard shortcut handler
   function handleKeydown(event: KeyboardEvent) {
@@ -81,7 +118,7 @@
   }
 
   function togglePanel() {
-    isCollapsed = !isCollapsed;
+    panelStore.togglePanel('ecsPanel');
   }
 
   function handleEntitySelect(entityId: number) {
@@ -175,22 +212,21 @@
 <button
   class="fixed top-2 left-2 z-50 bg-bg-panel border border-border-default text-text-primary p-1 rounded shadow-lg hover:bg-bg-overlay size-6"
   onclick={togglePanel}
-  title={isCollapsed ? "Show ECS Panel (N)" : "Hide ECS Panel (N)"}
+  title={$panelStore.ecsPanel.isCollapsed ? "Show ECS Panel (N)" : "Hide ECS Panel (N)"}
 >
-  {isCollapsed ? "📊" : "✕"}
+  {$panelStore.ecsPanel.isCollapsed ? "📊" : "✕"}
 </button>
 
 <!-- Collapsible Panel -->
 <div
-  class="fixed top-0 left-0 h-full bg-bg-primary/95 backdrop-blur-sm border-r border-border-default z-40"
-  class:w-96={!isCollapsed}
-  class:w-0={isCollapsed}
-  class:overflow-hidden={isCollapsed}
+  class="fixed top-0 left-0 h-full bg-bg-primary/95 backdrop-blur-sm z-40 flex"
+  style:width={$panelStore.ecsPanel.isCollapsed ? "0px" : `${panelWidth}px`}
+  class:overflow-hidden={$panelStore.ecsPanel.isCollapsed}
 >
   <div
-    class="p-2 h-full overflow-y-auto"
-    class:opacity-0={isCollapsed}
-    class:pointer-events-none={isCollapsed}
+    class="p-2 h-full overflow-y-auto flex-1"
+    class:opacity-0={$panelStore.ecsPanel.isCollapsed}
+    class:pointer-events-none={$panelStore.ecsPanel.isCollapsed}
   >
     <h2 class="text-text-bright mb-2 text-sm font-semibold mt-8">ECS Tree</h2>
 
@@ -234,4 +270,15 @@
       {/each}
     {/if}
   </div>
+  
+  <!-- Resize Handle Border -->
+  {#if !$panelStore.ecsPanel.isCollapsed}
+    <div
+      class="w-1 bg-border-default hover:bg-accent-blue cursor-col-resize transition-colors duration-150 ease-in-out flex-shrink-0"
+      class:bg-accent-blue={isResizing}
+      class:w-2={isResizing}
+      onmousedown={(e) => resizeHandler?.startResize(e, panelWidth)}
+      title="Drag to resize panel"
+    ></div>
+  {/if}
 </div>
