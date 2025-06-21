@@ -1,5 +1,5 @@
-import './style.css'
-import { initializeApp } from './app'
+import "./style.css";
+import { initializeApp } from "./app";
 
 // Start the application
-initializeApp()
+initializeApp();
