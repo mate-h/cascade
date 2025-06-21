@@ -6,7 +6,7 @@ import {
   type TransformComponent,
 } from "../components";
 
-export const erosionSystem = (ecs: ECS, deltaTime: number): void => {
+export const erosionSystem = (ecs: ECS, _deltaTime: number): void => {
   const erosionParams = getComponentsOfType<ErosionParamsComponent>(
     ecs,
     COMPONENT_TYPES.EROSION_PARAMS,

@@ -1,5 +1,5 @@
 import type { ECS, EntityID } from "../types";
-import { getComponentsOfType, getComponent, hasComponent } from "../types";
+import { getComponentsOfType, getComponent } from "../types";
 import {
   COMPONENT_TYPES,
   type ComputePassComponent,
@@ -189,7 +189,7 @@ const createGPUResources = (
     ecs,
     COMPONENT_TYPES.RENDER_PASS,
   );
-  for (const [entity, pass] of renderPasses) {
+  for (const [entity, _pass] of renderPasses) {
     const vertexModule = gpu.device.createShaderModule({
       code: vertexShaderSource,
     });
