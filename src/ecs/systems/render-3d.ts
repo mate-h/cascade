@@ -1,12 +1,10 @@
-import { mat4, vec3 } from 'wgpu-matrix';
+import { mat4 } from 'wgpu-matrix';
 import type { ECS } from '../types';
 import type { MinimalWebGPUState } from '../../gpu/device-only';
 import { COMPONENT_TYPES } from '../components';
 import type {
   MeshComponent,
   CameraComponent,
-  Transform3DComponent,
-  MaterialComponent,
   OrbitControlsComponent,
 } from '../components';
 
@@ -153,7 +151,7 @@ const initializeMeshBuffers = (ecs: ECS, gpu: MinimalWebGPUState): void => {
   // Find all mesh components and create GPU buffers
   for (const [entityId, componentMap] of ecs.components) {
     if (entityId === COMPONENT_TYPES.MESH) {
-      for (const [meshEntityId, meshComponent] of componentMap as Map<number, MeshComponent>) {
+      for (const [_, meshComponent] of componentMap as Map<number, MeshComponent>) {
         if (!meshComponent.gpuVertexBuffer) {
           const { vertexBuffer, indexBuffer } = createMeshBuffers(meshComponent.vertices, meshComponent.indices, gpu);
           meshComponent.gpuVertexBuffer = vertexBuffer;
@@ -231,7 +229,7 @@ const renderMeshesWithTopology = (renderPass: GPURenderPassEncoder, ecs: ECS, to
   const meshComponents = ecs.components.get(COMPONENT_TYPES.MESH) as Map<number, MeshComponent> | undefined;
   if (!meshComponents) return;
 
-  for (const [entityId, mesh] of meshComponents) {
+  for (const [_, mesh] of meshComponents) {
     // Only render meshes with matching topology (default to triangle-list if not specified)
     const meshTopology = mesh.topology || 'triangle-list';
     if (meshTopology === topology && mesh.gpuVertexBuffer && mesh.gpuIndexBuffer) {
