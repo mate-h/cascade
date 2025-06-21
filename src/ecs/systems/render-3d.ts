@@ -15,14 +15,22 @@ import sceneVertexShader from '../../shaders/scene-vertex.wgsl?raw';
 import sceneFragmentShader from '../../shaders/scene-fragment.wgsl?raw';
 
 interface RenderingResources {
-  renderPipeline?: GPURenderPipeline;
+  trianglePipeline?: GPURenderPipeline;
+  linePipeline?: GPURenderPipeline;
   uniformBuffer?: GPUBuffer;
-  uniformBindGroup?: GPUBindGroup;
+  triangleBindGroup?: GPUBindGroup;
+  lineBindGroup?: GPUBindGroup;
   depthTexture?: GPUTexture;
   initialized: boolean;
 }
 
 const createRenderingResources = (): RenderingResources => ({
+  trianglePipeline: undefined,
+  linePipeline: undefined,
+  uniformBuffer: undefined,
+  triangleBindGroup: undefined,
+  lineBindGroup: undefined,
+  depthTexture: undefined,
   initialized: false,
 });
 
@@ -47,8 +55,10 @@ export const render3DSystem = (ecs: ECS, gpu: MinimalWebGPUState): void => {
 const initializeRenderingResources = (ecs: ECS, gpu: MinimalWebGPUState): void => {
   renderingResources.depthTexture = createDepthTexture(gpu);
   renderingResources.uniformBuffer = createUniformBuffer(gpu);
-  renderingResources.renderPipeline = createRenderPipeline(gpu);
-  renderingResources.uniformBindGroup = createBindGroups(gpu, renderingResources.renderPipeline, renderingResources.uniformBuffer);
+  renderingResources.trianglePipeline = createRenderPipeline(gpu, 'triangle-list');
+  renderingResources.linePipeline = createRenderPipeline(gpu, 'line-list');
+  renderingResources.triangleBindGroup = createBindGroups(gpu, renderingResources.trianglePipeline, renderingResources.uniformBuffer);
+  renderingResources.lineBindGroup = createBindGroups(gpu, renderingResources.linePipeline, renderingResources.uniformBuffer);
   initializeMeshBuffers(ecs, gpu);
   
   renderingResources.initialized = true;
@@ -69,7 +79,9 @@ const createUniformBuffer = (gpu: MinimalWebGPUState): GPUBuffer => {
   });
 };
 
-const createRenderPipeline = (gpu: MinimalWebGPUState): GPURenderPipeline => {
+
+
+const createRenderPipeline = (gpu: MinimalWebGPUState, topology: GPUPrimitiveTopology): GPURenderPipeline => {
   const vertexBufferLayout: GPUVertexBufferLayout = {
     arrayStride: 9 * 4, // 9 floats per vertex (3 pos + 3 normal + 3 color)
     attributes: [
@@ -92,7 +104,7 @@ const createRenderPipeline = (gpu: MinimalWebGPUState): GPURenderPipeline => {
       targets: [{ format: 'bgra8unorm' }],
     },
     primitive: {
-      topology: 'triangle-list',
+      topology: topology,
       cullMode: 'back',
     },
     depthStencil: {
@@ -215,12 +227,14 @@ const updateUniforms = (ecs: ECS, gpu: MinimalWebGPUState): void => {
   }
 };
 
-const renderMeshes = (renderPass: GPURenderPassEncoder, ecs: ECS): void => {
+const renderMeshesWithTopology = (renderPass: GPURenderPassEncoder, ecs: ECS, topology: 'triangle-list' | 'line-list'): void => {
   const meshComponents = ecs.components.get(COMPONENT_TYPES.MESH) as Map<number, MeshComponent> | undefined;
   if (!meshComponents) return;
 
   for (const [entityId, mesh] of meshComponents) {
-    if (mesh.gpuVertexBuffer && mesh.gpuIndexBuffer) {
+    // Only render meshes with matching topology (default to triangle-list if not specified)
+    const meshTopology = mesh.topology || 'triangle-list';
+    if (meshTopology === topology && mesh.gpuVertexBuffer && mesh.gpuIndexBuffer) {
       renderPass.setVertexBuffer(0, mesh.gpuVertexBuffer);
       renderPass.setIndexBuffer(mesh.gpuIndexBuffer, 'uint32');
       renderPass.drawIndexed(mesh.indexCount);
@@ -232,7 +246,7 @@ const createRenderPassDescriptor = (textureView: GPUTextureView, depthView: GPUT
   colorAttachments: [
     {
       view: textureView,
-      clearValue: { r: 0.1, g: 0.1, b: 0.15, a: 1.0 },
+      clearValue: { r: 0.051, g: 0.067, b: 0.090, a: 1.0 }, // #0D1117 (GitHub neutral-1) converted to RGB
       loadOp: 'clear',
       storeOp: 'store',
     },
@@ -246,7 +260,7 @@ const createRenderPassDescriptor = (textureView: GPUTextureView, depthView: GPUT
 });
 
 const render = (ecs: ECS, gpu: MinimalWebGPUState): void => {
-  if (!renderingResources.renderPipeline || !renderingResources.uniformBindGroup || !renderingResources.depthTexture) {
+  if (!renderingResources.trianglePipeline || !renderingResources.linePipeline || !renderingResources.triangleBindGroup || !renderingResources.lineBindGroup || !renderingResources.depthTexture) {
     return;
   }
 
@@ -257,10 +271,15 @@ const render = (ecs: ECS, gpu: MinimalWebGPUState): void => {
   const renderPassDescriptor = createRenderPassDescriptor(textureView, depthView);
   const renderPass = commandEncoder.beginRenderPass(renderPassDescriptor);
 
-  renderPass.setPipeline(renderingResources.renderPipeline);
-  renderPass.setBindGroup(0, renderingResources.uniformBindGroup);
-  
-  renderMeshes(renderPass, ecs);
+  // Render triangle meshes
+  renderPass.setPipeline(renderingResources.trianglePipeline);
+  renderPass.setBindGroup(0, renderingResources.triangleBindGroup);
+  renderMeshesWithTopology(renderPass, ecs, 'triangle-list');
+
+  // Render line meshes
+  renderPass.setPipeline(renderingResources.linePipeline);
+  renderPass.setBindGroup(0, renderingResources.lineBindGroup);
+  renderMeshesWithTopology(renderPass, ecs, 'line-list');
 
   renderPass.end();
   gpu.device.queue.submit([commandEncoder.finish()]);

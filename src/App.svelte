@@ -2,6 +2,7 @@
   import { onMount, onDestroy } from "svelte";
   import ECSPanel from "./components/ECSPanel.svelte";
   import CanvasPanel from "./components/CanvasPanel.svelte";
+  import PropertiesPanel from "./components/PropertiesPanel.svelte";
   import { initializeApp, stopApp } from "./app";
   import type { AppState } from "./app";
 
@@ -26,13 +27,13 @@
 </script>
 
 <main
-  class="relative w-screen h-screen bg-black font-mono text-[13px] leading-[1.4]"
+  class="relative w-screen h-screen bg-bg-primary font-mono text-[13px] leading-[1.4]"
 >
   {#if error}
-    <div class="flex justify-center items-center h-full w-full text-white">
+    <div class="flex justify-center items-center h-full w-full text-text-primary">
       <div class="text-center">
-        <h1 class="text-2xl mb-4">Initialization Failed</h1>
-        <p class="text-gray-400">{error}</p>
+        <h1 class="text-2xl mb-4 text-text-bright">Initialization Failed</h1>
+        <p class="text-text-secondary">{error}</p>
       </div>
     </div>
   {:else if appState}
@@ -40,11 +41,13 @@
     <CanvasPanel {appState} />
     <!-- Collapsible Panel Overlay -->
     <ECSPanel {appState} />
+    <!-- Properties Panel -->
+    <PropertiesPanel {appState} />
   {:else}
-    <div class="flex justify-center items-center h-full w-full text-white">
+    <div class="flex justify-center items-center h-full w-full text-text-primary">
       <div class="text-center">
-        <h1 class="text-2xl mb-4">Loading...</h1>
-        <p class="text-gray-400">Initializing WebGPU and ECS</p>
+        <h1 class="text-2xl mb-4 text-text-bright">Loading...</h1>
+        <p class="text-text-secondary">Initializing WebGPU and ECS</p>
       </div>
     </div>
   {/if}

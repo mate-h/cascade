@@ -68,10 +68,15 @@ export const createGrid = (size: number = 10, divisions: number = 10): Mesh => {
   const step = size / divisions;
   const halfSize = size / 2;
   
+  // GitHub theme colors for grid
+  const gridColor: [number, number, number] = [0.396, 0.427, 0.471]; // #656C76 (neutral-8) converted to RGB
+  const xAxisColor: [number, number, number] = [0.854, 0.212, 0.200]; // #da3633 (red-5) converted to RGB
+  const zAxisColor: [number, number, number] = [0.122, 0.435, 0.922]; // #1f6feb (blue-5) converted to RGB
+  
   // Create grid lines in X direction
   for (let i = 0; i <= divisions; i++) {
     const x = -halfSize + i * step;
-    const color: [number, number, number] = i === divisions / 2 ? [0.8, 0.2, 0.2] : [0.5, 0.5, 0.5]; // Red center line
+    const color: [number, number, number] = i === divisions / 2 ? xAxisColor : gridColor; // X-axis line in red
     
     vertices.push(
       { position: [x, 0, -halfSize], normal: [0, 1, 0], color },
@@ -85,7 +90,7 @@ export const createGrid = (size: number = 10, divisions: number = 10): Mesh => {
   // Create grid lines in Z direction
   for (let i = 0; i <= divisions; i++) {
     const z = -halfSize + i * step;
-    const color: [number, number, number] = i === divisions / 2 ? [0.2, 0.2, 0.8] : [0.5, 0.5, 0.5]; // Blue center line
+    const color: [number, number, number] = i === divisions / 2 ? zAxisColor : gridColor; // Z-axis line in blue
     
     vertices.push(
       { position: [-halfSize, 0, z], normal: [0, 1, 0], color },

@@ -23,7 +23,7 @@
   class="entity-card cursor-pointer transition-all duration-200"
   class:entity-selected={isSelected}
   class:entity-highlighted={isHighlighted}
-  class:hover:bg-dark-panel={!isSelected}
+  class:hover:bg-bg-elevated={!isSelected}
   data-entity-id={entityId}
   onclick={handleClick}
   role="button"
@@ -31,22 +31,17 @@
   onkeydown={(e) => e.key === "Enter" && handleClick()}
 >
   <div
-    class="text-entity-primary font-semibold mb-1 flex items-center justify-between"
+    class="text-accent-blue font-semibold mb-1 flex items-center justify-between"
   >
     <span>Entity {entityId}</span>
     {#if isSelected}
-      <span class="text-xs text-entity-success">Selected</span>
+      <span class="text-xs text-accent-green">Selected</span>
     {:else if isHighlighted}
-      <span class="text-xs text-entity-warning">Dependency</span>
+      <span class="text-xs text-accent-yellow">Dependency</span>
     {/if}
   </div>
 
-  {#each Array.from(components) as [componentType, component] (componentType)}
-    <ComponentCard
-      {componentType}
-      {component}
-      {ecs}
-      onEntitySelect={onSelect}
-    />
+  {#each Array.from(components) as [componentType] (componentType)}
+    <ComponentCard {componentType} />
   {/each}
 </div>

@@ -204,6 +204,7 @@ export const create3DScene = (width: number, height: number): ECS => {
       indices: new Uint32Array(gridGeometry.indices),
       vertexCount: gridGeometry.vertices.length,
       indexCount: gridGeometry.indices.length,
+      topology: 'line-list',
     },
   );
 

@@ -22,7 +22,39 @@ export interface AppState {
   resizeHandler?: () => void;
 }
 
+interface CanvasDimensions {
+  displayWidth: number;
+  displayHeight: number;
+  canvasWidth: number;
+  canvasHeight: number;
+  devicePixelRatio: number;
+}
+
 let gameLoopId: number | null = null;
+
+// HiDPI helper functions following functional programming patterns
+const getDevicePixelRatio = (): number => window.devicePixelRatio || 1;
+
+const calculateCanvasDimensions = (displayWidth: number, displayHeight: number): CanvasDimensions => {
+  const devicePixelRatio = getDevicePixelRatio();
+  return {
+    displayWidth,
+    displayHeight,
+    canvasWidth: Math.floor(displayWidth * devicePixelRatio),
+    canvasHeight: Math.floor(displayHeight * devicePixelRatio),
+    devicePixelRatio,
+  };
+};
+
+const configureCanvasForHiDPI = (canvas: HTMLCanvasElement, dimensions: CanvasDimensions): void => {
+  // Set the canvas buffer size to the actual pixels we want to draw
+  canvas.width = dimensions.canvasWidth;
+  canvas.height = dimensions.canvasHeight;
+  
+  // Set the canvas display size via CSS
+  canvas.style.width = `${dimensions.displayWidth}px`;
+  canvas.style.height = `${dimensions.displayHeight}px`;
+};
 
 const gameLoop = (appState: AppState): void => {
   if (!appState.isRunning) return;
@@ -52,27 +84,23 @@ export const initializeApp = async (): Promise<AppState> => {
   const canvas = document.createElement("canvas");
   canvas.id = "canvas";
 
-  // Set initial canvas size for fullscreen
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-  canvas.width = width;
-  canvas.height = height;
+  // Calculate HiDPI dimensions for initial canvas size
+  const initialDimensions = calculateCanvasDimensions(window.innerWidth, window.innerHeight);
+  configureCanvasForHiDPI(canvas, initialDimensions);
 
   // Initialize minimal WebGPU (device + context only)
   const gpu = await initializeMinimalWebGPU(canvas);
 
-  // Create ECS with 3D scene
-  const ecs = create3DScene(width, height);
+  // Create ECS with 3D scene using canvas buffer dimensions
+  const ecs = create3DScene(initialDimensions.canvasWidth, initialDimensions.canvasHeight);
 
-  // Setup resize handling
+  // Setup resize handling with HiDPI support
   const handleResize = () => {
-    const newWidth = window.innerWidth;
-    const newHeight = window.innerHeight;
-
-    canvas.width = newWidth;
-    canvas.height = newHeight;
-    resize3DSystem(appState.ecs, appState.gpu, newWidth, newHeight);
-    appState.ecs = create3DScene(newWidth, newHeight);
+    const newDimensions = calculateCanvasDimensions(window.innerWidth, window.innerHeight);
+    configureCanvasForHiDPI(canvas, newDimensions);
+    
+    resize3DSystem(appState.ecs, appState.gpu, newDimensions.canvasWidth, newDimensions.canvasHeight);
+    appState.ecs = create3DScene(newDimensions.canvasWidth, newDimensions.canvasHeight);
   };
 
   window.addEventListener("resize", handleResize);

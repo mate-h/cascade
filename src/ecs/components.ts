@@ -54,6 +54,7 @@ export interface MeshComponent {
   indices: Uint32Array;
   vertexCount: number;
   indexCount: number;
+  topology?: 'triangle-list' | 'line-list';
   gpuVertexBuffer?: GPUBuffer;
   gpuIndexBuffer?: GPUBuffer;
 }

@@ -1,15 +1,44 @@
 <script lang="ts">
   import EntityCard from "./EntityCard.svelte";
   import { getECSStats, serializeECS } from "../utils/ecs";
+  import { selectedEntityId, selectEntity } from "../stores/selection";
 
   let { appState } = $props();
 
   let copyButtonText = $state("Copy as JSON");
   let isLoading = $state(false);
   let buttonIcon = $state("📋");
-  let selectedEntityId = $state<number | null>(null);
   let highlightedEntities = $state(new Set<number>());
   let isCollapsed = $state(true);
+
+  // Keyboard shortcut handler
+  function handleKeydown(event: KeyboardEvent) {
+    if (
+      event.key.toLowerCase() === "n" &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey
+    ) {
+      // Only trigger if not typing in an input/textarea
+      const target = event.target as HTMLElement;
+      if (
+        target.tagName !== "INPUT" &&
+        target.tagName !== "TEXTAREA" &&
+        !target.isContentEditable
+      ) {
+        event.preventDefault();
+        togglePanel();
+      }
+    }
+  }
+
+  // Add global keydown listener
+  $effect(() => {
+    document.addEventListener("keydown", handleKeydown);
+    return () => {
+      document.removeEventListener("keydown", handleKeydown);
+    };
+  });
 
   const stats = $derived(getECSStats(appState.ecs));
   const sortedEntities = $derived(
@@ -55,13 +84,13 @@
     isCollapsed = !isCollapsed;
   }
 
-  function selectEntity(entityId: number) {
-    if (selectedEntityId === entityId) {
+  function handleEntitySelect(entityId: number) {
+    if ($selectedEntityId === entityId) {
       // Deselect if clicking the same entity
-      selectedEntityId = null;
+      selectEntity(null);
       highlightedEntities = new Set();
     } else {
-      selectedEntityId = entityId;
+      selectEntity(entityId);
       highlightedEntities = findEntityDependencies(entityId);
     }
   }
@@ -144,31 +173,29 @@
 
 <!-- Toggle Button -->
 <button
-  class="fixed top-4 left-4 z-50 bg-dark-panel border border-gray-600 text-white p-2 rounded-md shadow-lg hover:bg-dark-component"
+  class="fixed top-2 left-2 z-50 bg-bg-panel border border-border-default text-text-primary p-1 rounded shadow-lg hover:bg-bg-overlay size-6"
   onclick={togglePanel}
-  title={isCollapsed ? "Show ECS Panel" : "Hide ECS Panel"}
+  title={isCollapsed ? "Show ECS Panel (N)" : "Hide ECS Panel (N)"}
 >
   {isCollapsed ? "📊" : "✕"}
 </button>
 
 <!-- Collapsible Panel -->
 <div
-  class="fixed top-0 left-0 h-full bg-dark-bg/95 backdrop-blur-sm border-r border-gray-600 z-40"
-  class:w-120={!isCollapsed}
+  class="fixed top-0 left-0 h-full bg-bg-primary/95 backdrop-blur-sm border-r border-border-default z-40"
+  class:w-96={!isCollapsed}
   class:w-0={isCollapsed}
   class:overflow-hidden={isCollapsed}
 >
   <div
-    class="p-4 h-full overflow-y-auto"
+    class="p-2 h-full overflow-y-auto"
     class:opacity-0={isCollapsed}
     class:pointer-events-none={isCollapsed}
   >
-    <h2 class="text-white mb-4 text-base font-semibold mt-12">ECS Tree</h2>
+    <h2 class="text-text-bright mb-2 text-sm font-semibold mt-8">ECS Tree</h2>
 
     <!-- Controls -->
-    <div
-      class="flex justify-between items-center mb-4 p-3 bg-dark-panel rounded border border-dark-border shadow-sm"
-    >
+    <div class="mb-2 p-2 bg-bg-panel rounded border border-border-subtle">
       <button
         class="btn"
         class:opacity-75={isLoading}
@@ -180,29 +207,29 @@
         <span class="text-sm">{buttonIcon}</span>
         <span>{copyButtonText}</span>
       </button>
-      <div class="text-right">
-        <div class="text-gray-400 text-[11px] italic">
-          {stats.entities} entities, {stats.components} components
-        </div>
-        {#if selectedEntityId !== null}
-          <div class="text-entity-primary text-[10px] mt-0.5">
-            Entity {selectedEntityId} selected • {highlightedEntities.size} dependencies
-          </div>
-        {/if}
+
+      <div class="text-text-secondary italic mt-0.5">
+        {stats.entities} entities, {stats.components} components
       </div>
+
+      {#if $selectedEntityId !== null}
+        <div class="text-accent-blue mt-0.5">
+          Entity {$selectedEntityId} selected • {highlightedEntities.size} dependencies
+        </div>
+      {/if}
     </div>
 
     <!-- Entity List -->
     {#if sortedEntities.length === 0}
-      <div class="text-gray-500 italic">No entities in ECS</div>
+      <div class="text-text-muted italic">No entities in ECS</div>
     {:else}
       {#each sortedEntities as entityId (entityId)}
         <EntityCard
           {entityId}
           ecs={appState.ecs}
-          isSelected={selectedEntityId === entityId}
+          isSelected={$selectedEntityId === entityId}
           isHighlighted={highlightedEntities.has(entityId)}
-          onSelect={() => selectEntity(entityId)}
+          onSelect={() => handleEntitySelect(entityId)}
         />
       {/each}
     {/if}
