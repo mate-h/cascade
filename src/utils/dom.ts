@@ -20,8 +20,12 @@ export const getCanvasElement = (): HTMLCanvasElement | null => {
   return document.querySelector<HTMLCanvasElement>("#canvas");
 };
 
-// Set canvas to fullscreen size
-export const setCanvasSize = (canvas: HTMLCanvasElement): void => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+// Set canvas size with optional width/height or default to window size
+export const setCanvasSize = (
+  canvas: HTMLCanvasElement,
+  width?: number,
+  height?: number,
+): void => {
+  canvas.width = width ?? window.innerWidth;
+  canvas.height = height ?? window.innerHeight;
 };
