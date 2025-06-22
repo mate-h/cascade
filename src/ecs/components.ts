@@ -59,17 +59,20 @@ export interface MeshComponent {
   gpuIndexBuffer?: GPUBuffer;
 }
 
+// Camera properties excluding transform information (handled by Transform3D)
 export interface CameraComponent {
-  position: [number, number, number];
-  target: [number, number, number];
-  up: [number, number, number];
   fov: number;
   aspect: number;
   near: number;
   far: number;
+  target: [number, number, number];
+  up: [number, number, number];
   viewMatrix?: Float32Array;
   projectionMatrix?: Float32Array;
 }
+
+// Marker component to denote which camera is used for rendering
+export interface ActiveCamera {}
 
 export interface MaterialComponent {
   color: [number, number, number];
@@ -85,6 +88,9 @@ export interface OrbitControlsComponent {
   maxDistance: number;
   rotationSpeed: number;
   zoomSpeed: number;
+  targetAzimuth?: number;
+  targetElevation?: number;
+  damping?: number;
 }
 
 export interface VisibilityComponent {
@@ -104,5 +110,6 @@ export const COMPONENT_TYPES = {
   CAMERA: "Camera",
   MATERIAL: "Material",
   ORBIT_CONTROLS: "OrbitControls",
+  ACTIVE_CAMERA: "ActiveCamera",
   VISIBILITY: "Visibility",
 } as const;

@@ -14,6 +14,7 @@ import {
   type MaterialComponent,
   type OrbitControlsComponent,
   type VisibilityComponent,
+  type ActiveCamera,
 } from "./ecs/components";
 import { createCube, createGrid, createVertexBuffer } from "./utils/geometry";
 
@@ -126,15 +127,29 @@ export const create3DScene = (width: number, height: number): ECS => {
     camera,
     COMPONENT_TYPES.CAMERA,
     {
-      position: [5, 3, 5],
-      target: [0, 0, 0],
-      up: [0, 1, 0],
       fov: Math.PI / 4, // 45 degrees
       aspect: width / height,
       near: 0.1,
       far: 100,
+      up: [0, 1, 0],
+      target: [0, 0, 0],
     },
   );
+
+  // Add transform for camera position / rotation
+  addComponent<Transform3DComponent>(
+    ecs,
+    camera,
+    COMPONENT_TYPES.TRANSFORM_3D,
+    {
+      position: [5, 3, 5],
+      rotation: [0, 0, 0],
+      scale: [1, 1, 1],
+    },
+  );
+
+  // Mark as active camera
+  addComponent<ActiveCamera>(ecs, camera, COMPONENT_TYPES.ACTIVE_CAMERA, {});
 
   // Create orbit controls for the camera
   addComponent<OrbitControlsComponent>(
@@ -150,6 +165,9 @@ export const create3DScene = (width: number, height: number): ECS => {
       maxDistance: 50,
       rotationSpeed: 0.01,
       zoomSpeed: 0.1,
+      targetAzimuth: Math.PI / 4,
+      targetElevation: Math.PI / 6,
+      damping: 0.3,
     },
   );
 

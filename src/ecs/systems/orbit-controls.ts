@@ -30,10 +30,13 @@ const createOrbitControlHandlers = (ecs: ECS): OrbitControlHandlers => {
     if (!orbitComponents) return;
 
     for (const [, orbitControls] of orbitComponents) {
-      orbitControls.azimuth -= deltaX * orbitControls.rotationSpeed;
-      orbitControls.elevation = Math.max(
+      const tA = (orbitControls.targetAzimuth ?? orbitControls.azimuth) - deltaX * orbitControls.rotationSpeed;
+      const tE = (orbitControls.targetElevation ?? orbitControls.elevation) - deltaY * orbitControls.rotationSpeed;
+
+      orbitControls.targetAzimuth = tA;
+      orbitControls.targetElevation = Math.max(
         -Math.PI / 2 + 0.1,
-        Math.min(Math.PI / 2 - 0.1, orbitControls.elevation - deltaY * orbitControls.rotationSpeed)
+        Math.min(Math.PI / 2 - 0.1, tE)
       );
     }
   };
@@ -110,11 +113,28 @@ const initializeCanvasControls = (canvas: HTMLCanvasElement, ecs: ECS): OrbitCon
 const canvasHandlers = new WeakMap<HTMLCanvasElement, OrbitControlHandlers>();
 const initializedCanvases = new WeakSet<HTMLCanvasElement>();
 
+// Helper lerp
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
 export const orbitControlsSystem = (ecs: ECS, canvas: HTMLCanvasElement): void => {
   if (!initializedCanvases.has(canvas)) {
     const handlers = initializeCanvasControls(canvas, ecs);
     canvasHandlers.set(canvas, handlers);
     initializedCanvases.add(canvas);
+  }
+
+  // Each frame: smoothly move azimuth/elevation towards targets
+  const orbitComponents = ecs.components.get(COMPONENT_TYPES.ORBIT_CONTROLS) as Map<number, OrbitControlsComponent> | undefined;
+  if (orbitComponents) {
+    for (const [, oc] of orbitComponents) {
+      const damping = oc.damping ?? 0.1;
+      if (oc.targetAzimuth !== undefined) {
+        oc.azimuth = lerp(oc.azimuth, oc.targetAzimuth, damping);
+      }
+      if (oc.targetElevation !== undefined) {
+        oc.elevation = lerp(oc.elevation, oc.targetElevation, damping);
+      }
+    }
   }
 };
 

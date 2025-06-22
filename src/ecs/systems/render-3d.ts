@@ -7,6 +7,7 @@ import type {
   CameraComponent,
   OrbitControlsComponent,
   VisibilityComponent,
+  Transform3DComponent,
 } from '../components';
 
 // Import shaders
@@ -168,29 +169,50 @@ const calculateCameraPosition = (orbitControls: OrbitControlsComponent): [number
   return [x + orbitControls.target[0], y + orbitControls.target[1], z + orbitControls.target[2]];
 };
 
-const updateCameraMatrices = (camera: CameraComponent, gpu: MinimalWebGPUState): void => {
+const updateCameraMatrices = (
+  camera: CameraComponent,
+  position: [number, number, number],
+  gpu: MinimalWebGPUState,
+): void => {
   camera.aspect = gpu.canvas.width / gpu.canvas.height;
-  camera.projectionMatrix = mat4.perspective(camera.fov, camera.aspect, camera.near, camera.far) as Float32Array;
-  camera.viewMatrix = mat4.lookAt(camera.position, camera.target, camera.up) as Float32Array;
+  camera.projectionMatrix = mat4.perspective(
+    camera.fov,
+    camera.aspect,
+    camera.near,
+    camera.far,
+  ) as Float32Array;
+  camera.viewMatrix = mat4.lookAt(position, camera.target, camera.up) as Float32Array;
 };
 
 const updateCamera = (ecs: ECS, gpu: MinimalWebGPUState): void => {
   const cameraComponents = ecs.components.get(COMPONENT_TYPES.CAMERA) as Map<number, CameraComponent> | undefined;
   const orbitComponents = ecs.components.get(COMPONENT_TYPES.ORBIT_CONTROLS) as Map<number, OrbitControlsComponent> | undefined;
+  const transformComponents = ecs.components.get(COMPONENT_TYPES.TRANSFORM_3D) as Map<number, Transform3DComponent> | undefined;
+  const activeCameras = ecs.components.get(COMPONENT_TYPES.ACTIVE_CAMERA) as Map<number, {}> | undefined;
 
-  if (!cameraComponents || !orbitComponents) return;
+  if (!cameraComponents) return;
 
   for (const [entityId, camera] of cameraComponents) {
-    const orbitControls = orbitComponents.get(entityId);
-    if (orbitControls) {
-      camera.position = calculateCameraPosition(orbitControls);
+    if (activeCameras && !activeCameras.has(entityId)) continue; // skip non-active cameras if marker present
+
+    const orbitControls = orbitComponents?.get(entityId);
+    const transform = transformComponents?.get(entityId);
+
+    if (orbitControls && transform) {
+      const newPos = calculateCameraPosition(orbitControls);
+      transform.position = newPos;
       camera.target = orbitControls.target;
-      updateCameraMatrices(camera, gpu);
+      updateCameraMatrices(camera, transform.position, gpu);
+    } else if (transform) {
+      updateCameraMatrices(camera, transform.position, gpu);
     }
   }
 };
 
-const createUniformData = (camera: CameraComponent): Float32Array => {
+const createUniformData = (
+  camera: CameraComponent,
+  position: [number, number, number],
+): Float32Array => {
   const viewProjectionMatrix = mat4.multiply(camera.projectionMatrix!, camera.viewMatrix!);
   const time = Date.now() / 1000;
   const uniformData = new Float32Array(64); // 256 bytes / 4 = 64 floats
@@ -202,7 +224,7 @@ const createUniformData = (camera: CameraComponent): Float32Array => {
   // Projection matrix (16 floats)
   uniformData.set(camera.projectionMatrix!, 32);
   // Camera position (3 floats, padded to 4)
-  uniformData.set([camera.position[0], camera.position[1], camera.position[2], 0], 48);
+  uniformData.set([position[0], position[1], position[2], 0], 48);
   // Time (1 float)
   uniformData[52] = time;
 
@@ -213,13 +235,20 @@ const updateUniforms = (ecs: ECS, gpu: MinimalWebGPUState): void => {
   if (!renderingResources.uniformBuffer) return;
 
   const cameraComponents = ecs.components.get(COMPONENT_TYPES.CAMERA) as Map<number, CameraComponent> | undefined;
+  const transformComponents = ecs.components.get(COMPONENT_TYPES.TRANSFORM_3D) as Map<number, Transform3DComponent> | undefined;
+  const activeCameras = ecs.components.get(COMPONENT_TYPES.ACTIVE_CAMERA) as Map<number, {}> | undefined;
   if (!cameraComponents) return;
 
-  for (const [, camera] of cameraComponents) {
+  for (const [entityId, camera] of cameraComponents) {
+    if (activeCameras && !activeCameras.has(entityId)) continue;
+
+    const transform = transformComponents?.get(entityId);
+    if (!transform) continue;
+
     if (camera.viewMatrix && camera.projectionMatrix) {
-      const uniformData = createUniformData(camera);
+      const uniformData = createUniformData(camera, transform.position);
       gpu.device.queue.writeBuffer(renderingResources.uniformBuffer, 0, uniformData);
-      break; // Use first camera found
+      break; // Use first active camera found
     }
   }
 };
