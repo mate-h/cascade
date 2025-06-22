@@ -4,14 +4,14 @@ import {
   type MinimalWebGPUState,
 } from "./gpu/device-only";
 import { create3DScene } from "./scene";
-import { 
-  erosionSystem, 
-  render3DSystem, 
+import {
+  erosionSystem,
+  render3DSystem,
   resize3DSystem,
   orbitControlsSystem,
   cleanupOrbitControls,
   cleanup3DSystem,
-  type ECS 
+  type ECS,
 } from "./ecs";
 
 export interface AppState {
@@ -35,7 +35,10 @@ let gameLoopId: number | null = null;
 // HiDPI helper functions following functional programming patterns
 const getDevicePixelRatio = (): number => window.devicePixelRatio || 1;
 
-const calculateCanvasDimensions = (displayWidth: number, displayHeight: number): CanvasDimensions => {
+const calculateCanvasDimensions = (
+  displayWidth: number,
+  displayHeight: number,
+): CanvasDimensions => {
   const devicePixelRatio = getDevicePixelRatio();
   return {
     displayWidth,
@@ -46,11 +49,14 @@ const calculateCanvasDimensions = (displayWidth: number, displayHeight: number):
   };
 };
 
-const configureCanvasForHiDPI = (canvas: HTMLCanvasElement, dimensions: CanvasDimensions): void => {
+const configureCanvasForHiDPI = (
+  canvas: HTMLCanvasElement,
+  dimensions: CanvasDimensions,
+): void => {
   // Set the canvas buffer size to the actual pixels we want to draw
   canvas.width = dimensions.canvasWidth;
   canvas.height = dimensions.canvasHeight;
-  
+
   // Set the canvas display size via CSS
   canvas.style.width = `${dimensions.displayWidth}px`;
   canvas.style.height = `${dimensions.displayHeight}px`;
@@ -85,14 +91,20 @@ export const initializeApp = async (): Promise<AppState> => {
   canvas.id = "canvas";
 
   // Calculate HiDPI dimensions for initial canvas size
-  const initialDimensions = calculateCanvasDimensions(window.innerWidth, window.innerHeight);
+  const initialDimensions = calculateCanvasDimensions(
+    window.innerWidth,
+    window.innerHeight,
+  );
   configureCanvasForHiDPI(canvas, initialDimensions);
 
   // Initialize minimal WebGPU (device + context only)
   const gpu = await initializeMinimalWebGPU(canvas);
 
   // Create ECS with 3D scene using canvas buffer dimensions
-  const ecs = create3DScene(initialDimensions.canvasWidth, initialDimensions.canvasHeight);
+  const ecs = create3DScene(
+    initialDimensions.canvasWidth,
+    initialDimensions.canvasHeight,
+  );
 
   // Create app state first
   const appState: AppState = {
@@ -104,18 +116,26 @@ export const initializeApp = async (): Promise<AppState> => {
 
   // Setup resize handling with HiDPI support
   const handleResize = () => {
-    const newDimensions = calculateCanvasDimensions(window.innerWidth, window.innerHeight);
+    const newDimensions = calculateCanvasDimensions(
+      window.innerWidth,
+      window.innerHeight,
+    );
     configureCanvasForHiDPI(canvas, newDimensions);
-    
+
     // Reconfigure WebGPU context after canvas resize
     const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
     appState.gpu.context.configure({
       device: appState.gpu.device,
       format: canvasFormat,
     });
-    
+
     // Only update camera and depth texture, don't recreate the scene
-    resize3DSystem(appState.ecs, appState.gpu, newDimensions.canvasWidth, newDimensions.canvasHeight);
+    resize3DSystem(
+      appState.ecs,
+      appState.gpu,
+      newDimensions.canvasWidth,
+      newDimensions.canvasHeight,
+    );
   };
 
   window.addEventListener("resize", handleResize);
@@ -131,7 +151,7 @@ export const initializeApp = async (): Promise<AppState> => {
 
 export const stopApp = (appState: AppState): void => {
   appState.isRunning = false;
-  
+
   // Cancel animation frame
   if (gameLoopId !== null) {
     cancelAnimationFrame(gameLoopId);

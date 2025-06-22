@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store';
+import { writable } from "svelte/store";
 
 export interface PanelState {
   isCollapsed: boolean;
@@ -25,33 +25,36 @@ const DEFAULT_PANEL_SIZES: PanelSizes = {
 
 // Load saved panel sizes from localStorage
 function loadPanelSizes(): PanelSizes {
-  if (typeof window === 'undefined') return DEFAULT_PANEL_SIZES;
-  
+  if (typeof window === "undefined") return DEFAULT_PANEL_SIZES;
+
   try {
-    const saved = localStorage.getItem('cascade-panel-sizes');
+    const saved = localStorage.getItem("cascade-panel-sizes");
     if (saved) {
       const parsed = JSON.parse(saved);
       // Merge with defaults to ensure all properties exist
       return {
         ecsPanel: { ...DEFAULT_PANEL_SIZES.ecsPanel, ...parsed.ecsPanel },
-        propertiesPanel: { ...DEFAULT_PANEL_SIZES.propertiesPanel, ...parsed.propertiesPanel },
+        propertiesPanel: {
+          ...DEFAULT_PANEL_SIZES.propertiesPanel,
+          ...parsed.propertiesPanel,
+        },
       };
     }
   } catch (error) {
-    console.warn('Failed to load panel sizes from localStorage:', error);
+    console.warn("Failed to load panel sizes from localStorage:", error);
   }
-  
+
   return DEFAULT_PANEL_SIZES;
 }
 
 // Save panel sizes to localStorage
 function savePanelSizes(sizes: PanelSizes): void {
-  if (typeof window === 'undefined') return;
-  
+  if (typeof window === "undefined") return;
+
   try {
-    localStorage.setItem('cascade-panel-sizes', JSON.stringify(sizes));
+    localStorage.setItem("cascade-panel-sizes", JSON.stringify(sizes));
   } catch (error) {
-    console.warn('Failed to save panel sizes to localStorage:', error);
+    console.warn("Failed to save panel sizes to localStorage:", error);
   }
 }
 
@@ -61,58 +64,58 @@ function createPanelStore() {
 
   return {
     subscribe,
-    
+
     // Toggle panel collapsed state
     togglePanel(panelKey: keyof PanelSizes) {
-      update(sizes => {
+      update((sizes) => {
         const newSizes = {
           ...sizes,
           [panelKey]: {
             ...sizes[panelKey],
-            isCollapsed: !sizes[panelKey].isCollapsed
-          }
+            isCollapsed: !sizes[panelKey].isCollapsed,
+          },
         };
         savePanelSizes(newSizes);
         return newSizes;
       });
     },
-    
+
     // Set panel width
     setPanelWidth(panelKey: keyof PanelSizes, width: number) {
-      update(sizes => {
+      update((sizes) => {
         const newSizes = {
           ...sizes,
           [panelKey]: {
             ...sizes[panelKey],
-            width: Math.max(200, Math.min(800, width)) // Clamp between 200px and 800px
-          }
+            width: Math.max(200, Math.min(800, width)), // Clamp between 200px and 800px
+          },
         };
         savePanelSizes(newSizes);
         return newSizes;
       });
     },
-    
+
     // Set panel collapsed state
     setPanelCollapsed(panelKey: keyof PanelSizes, isCollapsed: boolean) {
-      update(sizes => {
+      update((sizes) => {
         const newSizes = {
           ...sizes,
           [panelKey]: {
             ...sizes[panelKey],
-            isCollapsed
-          }
+            isCollapsed,
+          },
         };
         savePanelSizes(newSizes);
         return newSizes;
       });
     },
-    
+
     // Reset to defaults
     reset() {
       const newSizes = DEFAULT_PANEL_SIZES;
       savePanelSizes(newSizes);
       set(newSizes);
-    }
+    },
   };
 }
 
@@ -127,52 +130,53 @@ export interface ResizeState {
 
 export function createResizeHandler(
   panelKey: keyof PanelSizes,
-  onResize?: (width: number) => void
+  onResize?: (width: number) => void,
 ) {
   let resizeState: ResizeState = {
     isResizing: false,
     startX: 0,
-    startWidth: 0
+    startWidth: 0,
   };
 
   function startResize(event: MouseEvent, currentWidth: number) {
     resizeState.isResizing = true;
     resizeState.startX = event.clientX;
     resizeState.startWidth = currentWidth;
-    
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    
+
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
     event.preventDefault();
   }
 
   function handleMouseMove(event: MouseEvent) {
     if (!resizeState.isResizing) return;
-    
+
     const deltaX = event.clientX - resizeState.startX;
-    const newWidth = panelKey === 'ecsPanel' 
-      ? resizeState.startWidth + deltaX  // ECS panel grows to the right
-      : resizeState.startWidth - deltaX; // Properties panel grows to the left
-    
+    const newWidth =
+      panelKey === "ecsPanel"
+        ? resizeState.startWidth + deltaX // ECS panel grows to the right
+        : resizeState.startWidth - deltaX; // Properties panel grows to the left
+
     const clampedWidth = Math.max(200, Math.min(800, newWidth));
-    
+
     onResize?.(clampedWidth);
     panelStore.setPanelWidth(panelKey, clampedWidth);
   }
 
   function stopResize() {
     if (!resizeState.isResizing) return;
-    
+
     resizeState.isResizing = false;
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
   }
 
   // Set up global event listeners
-  if (typeof window !== 'undefined') {
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', stopResize);
-    document.addEventListener('mouseleave', stopResize);
+  if (typeof window !== "undefined") {
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", stopResize);
+    document.addEventListener("mouseleave", stopResize);
   }
 
   return {
@@ -181,11 +185,11 @@ export function createResizeHandler(
     },
     startResize,
     cleanup() {
-      if (typeof window !== 'undefined') {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', stopResize);
-        document.removeEventListener('mouseleave', stopResize);
+      if (typeof window !== "undefined") {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", stopResize);
+        document.removeEventListener("mouseleave", stopResize);
       }
-    }
+    },
   };
-} 
+}

@@ -124,20 +124,15 @@ export const create3DScene = (width: number, height: number): ECS => {
 
   // Create camera entity
   const camera = createEntity(ecs);
-  addComponent<CameraComponent>(
-    ecs,
-    camera,
-    COMPONENT_TYPES.CAMERA,
-    {
-      fov: Math.PI / 4, // 45 degrees
-      aspect: width / height,
-      near: 0.1,
-      far: 100,
-      up: vec3.create(0, 1, 0),
-      showGizmo: true,
-      target: vec3.create(0, 0, 0),
-    },
-  );
+  addComponent<CameraComponent>(ecs, camera, COMPONENT_TYPES.CAMERA, {
+    fov: Math.PI / 4, // 45 degrees
+    aspect: width / height,
+    near: 0.1,
+    far: 100,
+    up: vec3.create(0, 1, 0),
+    showGizmo: true,
+    target: vec3.create(0, 0, 0),
+  });
 
   // Add transform for camera position / rotation
   addComponent<Transform3DComponent>(
@@ -187,49 +182,39 @@ export const create3DScene = (width: number, height: number): ECS => {
     showGizmo: true,
     target: vec3.create(0, 0, 0),
   });
-  addComponent<Transform3DComponent>(ecs, gameCam, COMPONENT_TYPES.TRANSFORM_3D, {
-    position: vec3.create(0, 6, 12),
-    rotation: vec3.create(0, 0, 0),
-    scale: vec3.create(1, 1, 1),
-  });
-
-  // Create cube entity
-  const cube = createEntity(ecs);
-  const cubeGeometry = createCube(2.0);
-  const cubeVertexData = createVertexBuffer(cubeGeometry.vertices);
-  
-  addComponent<MeshComponent>(
-    ecs,
-    cube,
-    COMPONENT_TYPES.MESH,
-    {
-      vertices: cubeVertexData,
-      indices: new Uint32Array(cubeGeometry.indices),
-      vertexCount: cubeGeometry.vertices.length,
-      indexCount: cubeGeometry.indices.length,
-    },
-  );
-
   addComponent<Transform3DComponent>(
     ecs,
-    cube,
+    gameCam,
     COMPONENT_TYPES.TRANSFORM_3D,
     {
-      position: vec3.create(0, 1, 0), // Elevated above ground
+      position: vec3.create(0, 6, 12),
       rotation: vec3.create(0, 0, 0),
       scale: vec3.create(1, 1, 1),
     },
   );
 
-  addComponent<MaterialComponent>(
-    ecs,
-    cube,
-    COMPONENT_TYPES.MATERIAL,
-    {
-      color: [0.8, 0.2, 0.2],
-      shininess: 32,
-    },
-  );
+  // Create cube entity
+  const cube = createEntity(ecs);
+  const cubeGeometry = createCube(2.0);
+  const cubeVertexData = createVertexBuffer(cubeGeometry.vertices);
+
+  addComponent<MeshComponent>(ecs, cube, COMPONENT_TYPES.MESH, {
+    vertices: cubeVertexData,
+    indices: new Uint32Array(cubeGeometry.indices),
+    vertexCount: cubeGeometry.vertices.length,
+    indexCount: cubeGeometry.indices.length,
+  });
+
+  addComponent<Transform3DComponent>(ecs, cube, COMPONENT_TYPES.TRANSFORM_3D, {
+    position: vec3.create(0, 1, 0), // Elevated above ground
+    rotation: vec3.create(0, 0, 0),
+    scale: vec3.create(1, 1, 1),
+  });
+
+  addComponent<MaterialComponent>(ecs, cube, COMPONENT_TYPES.MATERIAL, {
+    color: vec3.create(0.8, 0.2, 0.2),
+    shininess: 32,
+  });
 
   // Add visibility component
   addComponent<VisibilityComponent>(ecs, cube, COMPONENT_TYPES.VISIBILITY, {
@@ -240,40 +225,25 @@ export const create3DScene = (width: number, height: number): ECS => {
   const grid = createEntity(ecs);
   const gridGeometry = createGrid(20, 20);
   const gridVertexData = createVertexBuffer(gridGeometry.vertices);
-  
-  addComponent<MeshComponent>(
-    ecs,
-    grid,
-    COMPONENT_TYPES.MESH,
-    {
-      vertices: gridVertexData,
-      indices: new Uint32Array(gridGeometry.indices),
-      vertexCount: gridGeometry.vertices.length,
-      indexCount: gridGeometry.indices.length,
-      topology: 'line-list',
-    },
-  );
 
-  addComponent<Transform3DComponent>(
-    ecs,
-    grid,
-    COMPONENT_TYPES.TRANSFORM_3D,
-    {
-      position: vec3.create(0, 0, 0),
-      rotation: vec3.create(0, 0, 0),
-      scale: vec3.create(1, 1, 1),
-    },
-  );
+  addComponent<MeshComponent>(ecs, grid, COMPONENT_TYPES.MESH, {
+    vertices: gridVertexData,
+    indices: new Uint32Array(gridGeometry.indices),
+    vertexCount: gridGeometry.vertices.length,
+    indexCount: gridGeometry.indices.length,
+    topology: "line-list",
+  });
 
-  addComponent<MaterialComponent>(
-    ecs,
-    grid,
-    COMPONENT_TYPES.MATERIAL,
-    {
-      color: [0.5, 0.5, 0.5],
-      shininess: 1,
-    },
-  );
+  addComponent<Transform3DComponent>(ecs, grid, COMPONENT_TYPES.TRANSFORM_3D, {
+    position: vec3.create(0, 0, 0),
+    rotation: vec3.create(0, 0, 0),
+    scale: vec3.create(1, 1, 1),
+  });
+
+  addComponent<MaterialComponent>(ecs, grid, COMPONENT_TYPES.MATERIAL, {
+    color: vec3.create(0.5, 0.5, 0.5),
+    shininess: 1,
+  });
 
   // Visibility for grid
   addComponent<VisibilityComponent>(ecs, grid, COMPONENT_TYPES.VISIBILITY, {

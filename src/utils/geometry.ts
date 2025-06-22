@@ -1,7 +1,10 @@
+import { cube } from "primitive-geometry";
+import { vec3, type Vec3 } from "wgpu-matrix";
+
 export interface Vertex {
-  position: [number, number, number];
-  normal: [number, number, number];
-  color: [number, number, number];
+  position: Vec3;
+  normal: Vec3;
+  color: Vec3;
 }
 
 export interface Mesh {
@@ -10,53 +13,42 @@ export interface Mesh {
 }
 
 export const createCube = (size: number = 1.0): Mesh => {
-  const half = size / 2;
-  const vertices: Vertex[] = [
-    // Front face (red)
-    { position: [-half, -half,  half], normal: [0, 0, 1], color: [1, 0.2, 0.2] },
-    { position: [ half, -half,  half], normal: [0, 0, 1], color: [1, 0.2, 0.2] },
-    { position: [ half,  half,  half], normal: [0, 0, 1], color: [1, 0.2, 0.2] },
-    { position: [-half,  half,  half], normal: [0, 0, 1], color: [1, 0.2, 0.2] },
+  // Generate geometry using primitive-geometry
+  const g = cube({ sx: size, sy: size, sz: size });
 
-    // Back face (green)
-    { position: [-half, -half, -half], normal: [0, 0, -1], color: [0.2, 1, 0.2] },
-    { position: [-half,  half, -half], normal: [0, 0, -1], color: [0.2, 1, 0.2] },
-    { position: [ half,  half, -half], normal: [0, 0, -1], color: [0.2, 1, 0.2] },
-    { position: [ half, -half, -half], normal: [0, 0, -1], color: [0.2, 1, 0.2] },
+  const positions = g.positions;
+  const normals = g.normals;
+  const cells = g.cells as Uint8Array | Uint16Array | Uint32Array;
 
-    // Left face (blue)
-    { position: [-half, -half, -half], normal: [-1, 0, 0], color: [0.2, 0.2, 1] },
-    { position: [-half, -half,  half], normal: [-1, 0, 0], color: [0.2, 0.2, 1] },
-    { position: [-half,  half,  half], normal: [-1, 0, 0], color: [0.2, 0.2, 1] },
-    { position: [-half,  half, -half], normal: [-1, 0, 0], color: [0.2, 0.2, 1] },
+  const vertices: Vertex[] = [];
+  const defaultColor: [number, number, number] = [0.8, 0.8, 0.8];
 
-    // Right face (yellow)
-    { position: [ half, -half, -half], normal: [1, 0, 0], color: [1, 1, 0.2] },
-    { position: [ half,  half, -half], normal: [1, 0, 0], color: [1, 1, 0.2] },
-    { position: [ half,  half,  half], normal: [1, 0, 0], color: [1, 1, 0.2] },
-    { position: [ half, -half,  half], normal: [1, 0, 0], color: [1, 1, 0.2] },
+  for (let i = 0; i < positions.length; i += 3) {
+    const pos: [number, number, number] = [
+      positions[i],
+      positions[i + 1],
+      positions[i + 2],
+    ];
+    const norm: [number, number, number] = normals
+      ? [normals[i], normals[i + 1], normals[i + 2]]
+      : [0, 0, 0];
 
-    // Top face (magenta)
-    { position: [-half,  half, -half], normal: [0, 1, 0], color: [1, 0.2, 1] },
-    { position: [-half,  half,  half], normal: [0, 1, 0], color: [1, 0.2, 1] },
-    { position: [ half,  half,  half], normal: [0, 1, 0], color: [1, 0.2, 1] },
-    { position: [ half,  half, -half], normal: [0, 1, 0], color: [1, 0.2, 1] },
+    // Simple coloring based on normal direction (abs value gives nice RGB per face)
+    const color: [number, number, number] = [
+      Math.abs(norm[0]) || defaultColor[0],
+      Math.abs(norm[1]) || defaultColor[1],
+      Math.abs(norm[2]) || defaultColor[2],
+    ];
 
-    // Bottom face (cyan)
-    { position: [-half, -half, -half], normal: [0, -1, 0], color: [0.2, 1, 1] },
-    { position: [ half, -half, -half], normal: [0, -1, 0], color: [0.2, 1, 1] },
-    { position: [ half, -half,  half], normal: [0, -1, 0], color: [0.2, 1, 1] },
-    { position: [-half, -half,  half], normal: [0, -1, 0], color: [0.2, 1, 1] },
-  ];
+    vertices.push({
+      position: vec3.create(...pos),
+      normal: vec3.create(...norm),
+      color: vec3.create(...color),
+    });
+  }
 
-  const indices = [
-    0,  1,  2,    0,  2,  3,    // front
-    4,  5,  6,    4,  6,  7,    // back
-    8,  9,  10,   8,  10, 11,   // left
-    12, 13, 14,   12, 14, 15,   // right
-    16, 17, 18,   16, 18, 19,   // top
-    20, 21, 22,   20, 22, 23,   // bottom
-  ];
+  // Flatten index buffer to number[] for compatibility with rest of pipeline
+  const indices: number[] = Array.from(cells as Iterable<number>);
 
   return { vertices, indices };
 };
@@ -64,68 +56,86 @@ export const createCube = (size: number = 1.0): Mesh => {
 export const createGrid = (size: number = 10, divisions: number = 10): Mesh => {
   const vertices: Vertex[] = [];
   const indices: number[] = [];
-  
+
   const step = size / divisions;
   const halfSize = size / 2;
-  
+
   // GitHub theme colors for grid
   const gridColor: [number, number, number] = [0.396, 0.427, 0.471]; // #656C76 (neutral-8) converted to RGB
-  const xAxisColor: [number, number, number] = [0.854, 0.212, 0.200]; // #da3633 (red-5) converted to RGB
+  const xAxisColor: [number, number, number] = [0.854, 0.212, 0.2]; // #da3633 (red-5) converted to RGB
   const zAxisColor: [number, number, number] = [0.122, 0.435, 0.922]; // #1f6feb (blue-5) converted to RGB
-  
+
   // Create grid lines in X direction
   for (let i = 0; i <= divisions; i++) {
     const x = -halfSize + i * step;
-    const color: [number, number, number] = i === divisions / 2 ? xAxisColor : gridColor; // X-axis line in red
-    
+    const color: [number, number, number] =
+      i === divisions / 2 ? xAxisColor : gridColor; // X-axis line in red
+
     vertices.push(
-      { position: [x, 0, -halfSize], normal: [0, 1, 0], color },
-      { position: [x, 0,  halfSize], normal: [0, 1, 0], color }
+      {
+        position: vec3.create(x, 0, -halfSize),
+        normal: vec3.create(0, 1, 0),
+        color: vec3.create(...color),
+      },
+      {
+        position: vec3.create(x, 0, halfSize),
+        normal: vec3.create(0, 1, 0),
+        color: vec3.create(...color),
+      },
     );
-    
+
     const baseIndex = vertices.length - 2;
     indices.push(baseIndex, baseIndex + 1);
   }
-  
+
   // Create grid lines in Z direction
   for (let i = 0; i <= divisions; i++) {
     const z = -halfSize + i * step;
-    const color: [number, number, number] = i === divisions / 2 ? zAxisColor : gridColor; // Z-axis line in blue
-    
+    const color: [number, number, number] =
+      i === divisions / 2 ? zAxisColor : gridColor; // Z-axis line in blue
+
     vertices.push(
-      { position: [-halfSize, 0, z], normal: [0, 1, 0], color },
-      { position: [ halfSize, 0, z], normal: [0, 1, 0], color }
+      {
+        position: vec3.create(-halfSize, 0, z),
+        normal: vec3.create(0, 1, 0),
+        color: vec3.create(...color),
+      },
+      {
+        position: vec3.create(halfSize, 0, z),
+        normal: vec3.create(0, 1, 0),
+        color: vec3.create(...color),
+      },
     );
-    
+
     const baseIndex = vertices.length - 2;
     indices.push(baseIndex, baseIndex + 1);
   }
-  
+
   return { vertices, indices };
 };
 
 export const createVertexBuffer = (vertices: Vertex[]): Float32Array => {
   const buffer = new Float32Array(vertices.length * 9); // 3 pos + 3 normal + 3 color
-  
+
   for (let i = 0; i < vertices.length; i++) {
     const vertex = vertices[i];
     const offset = i * 9;
-    
+
     // Position
     buffer[offset + 0] = vertex.position[0];
     buffer[offset + 1] = vertex.position[1];
     buffer[offset + 2] = vertex.position[2];
-    
+
     // Normal
     buffer[offset + 3] = vertex.normal[0];
     buffer[offset + 4] = vertex.normal[1];
     buffer[offset + 5] = vertex.normal[2];
-    
+
     // Color
     buffer[offset + 6] = vertex.color[0];
     buffer[offset + 7] = vertex.color[1];
     buffer[offset + 8] = vertex.color[2];
   }
-  
+
   return buffer;
-}; 
+};

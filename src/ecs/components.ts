@@ -55,7 +55,7 @@ export interface MeshComponent {
   indices: Uint32Array;
   vertexCount: number;
   indexCount: number;
-  topology?: 'triangle-list' | 'line-list';
+  topology?: "triangle-list" | "line-list";
   gpuVertexBuffer?: GPUBuffer;
   gpuIndexBuffer?: GPUBuffer;
 }
@@ -77,7 +77,7 @@ export interface CameraComponent {
 export interface ActiveCamera {}
 
 export interface MaterialComponent {
-  color: [number, number, number];
+  color: Vec3;
   shininess: number;
 }
 
