@@ -10,14 +10,13 @@
   let currentValue = $state(value);
 
   function handleToggle() {
-    currentValue = !currentValue;
     onUpdate(currentValue);
   }
 </script>
 
 <div class="space-y-2">
   <div class="flex items-center gap-2">
-    <label class="text-text-secondary text-xs font-medium min-w-12">Value:</label>
+    <span class="text-text-secondary text-xs font-medium min-w-12">Value:</span>
     <label class="flex items-center gap-2 cursor-pointer">
       <input
         type="checkbox"

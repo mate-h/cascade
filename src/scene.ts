@@ -13,6 +13,7 @@ import {
   type CameraComponent,
   type MaterialComponent,
   type OrbitControlsComponent,
+  type VisibilityComponent,
 } from "./ecs/components";
 import { createCube, createGrid, createVertexBuffer } from "./utils/geometry";
 
@@ -190,6 +191,11 @@ export const create3DScene = (width: number, height: number): ECS => {
     },
   );
 
+  // Add visibility component
+  addComponent<VisibilityComponent>(ecs, cube, COMPONENT_TYPES.VISIBILITY, {
+    visible: true,
+  });
+
   // Create grid entity
   const grid = createEntity(ecs);
   const gridGeometry = createGrid(20, 20);
@@ -228,6 +234,11 @@ export const create3DScene = (width: number, height: number): ECS => {
       shininess: 1,
     },
   );
+
+  // Visibility for grid
+  addComponent<VisibilityComponent>(ecs, grid, COMPONENT_TYPES.VISIBILITY, {
+    visible: true,
+  });
 
   // Keep the erosion params for the UI
   const erosionParams = createEntity(ecs);

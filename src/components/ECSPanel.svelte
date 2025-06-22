@@ -273,12 +273,14 @@
   
   <!-- Resize Handle Border -->
   {#if !$panelStore.ecsPanel.isCollapsed}
-    <div
-      class="w-1 bg-border-default hover:bg-accent-blue cursor-col-resize transition-colors duration-150 ease-in-out flex-shrink-0"
+    <button
+      type="button"
+      aria-label="Resize panel"
+      class="w-1 bg-border-default hover:bg-accent-blue cursor-col-resize transition-colors duration-150 ease-in-out flex-shrink-0 focus:outline-none"
       class:bg-accent-blue={isResizing}
       class:w-2={isResizing}
       onmousedown={(e) => resizeHandler?.startResize(e, panelWidth)}
       title="Drag to resize panel"
-    ></div>
+    ></button>
   {/if}
 </div>

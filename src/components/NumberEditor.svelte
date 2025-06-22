@@ -35,12 +35,16 @@
   function formatValue(val: number): string {
     return isInteger ? val.toString() : val.toFixed(3);
   }
+
+  // Generate a unique ID for the input to link with the label
+  const inputId = `number-input-${Math.random().toString(36).slice(2, 9)}`;
 </script>
 
 <div class="space-y-2">
   <div class="flex items-center gap-2">
-    <label class="text-text-secondary text-xs font-medium min-w-12">Value:</label>
+    <label for={inputId} class="text-text-secondary text-xs font-medium min-w-12">Value:</label>
     <input
+      id={inputId}
       type="number"
       bind:value={currentValue}
       {min}

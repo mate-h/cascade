@@ -87,6 +87,10 @@ export interface OrbitControlsComponent {
   zoomSpeed: number;
 }
 
+export interface VisibilityComponent {
+  visible: boolean;
+}
+
 export const COMPONENT_TYPES = {
   COMPUTE_PASS: "ComputePass",
   RENDER_PASS: "RenderPass",
@@ -100,4 +104,5 @@ export const COMPONENT_TYPES = {
   CAMERA: "Camera",
   MATERIAL: "Material",
   ORBIT_CONTROLS: "OrbitControls",
+  VISIBILITY: "Visibility",
 } as const;

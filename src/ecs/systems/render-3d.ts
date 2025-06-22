@@ -6,6 +6,7 @@ import type {
   MeshComponent,
   CameraComponent,
   OrbitControlsComponent,
+  VisibilityComponent,
 } from '../components';
 
 // Import shaders
@@ -76,8 +77,6 @@ const createUniformBuffer = (gpu: MinimalWebGPUState): GPUBuffer => {
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
   });
 };
-
-
 
 const createRenderPipeline = (gpu: MinimalWebGPUState, topology: GPUPrimitiveTopology): GPURenderPipeline => {
   const vertexBufferLayout: GPUVertexBufferLayout = {
@@ -227,9 +226,17 @@ const updateUniforms = (ecs: ECS, gpu: MinimalWebGPUState): void => {
 
 const renderMeshesWithTopology = (renderPass: GPURenderPassEncoder, ecs: ECS, topology: 'triangle-list' | 'line-list'): void => {
   const meshComponents = ecs.components.get(COMPONENT_TYPES.MESH) as Map<number, MeshComponent> | undefined;
+  const visibilityComponents = ecs.components.get(COMPONENT_TYPES.VISIBILITY) as Map<number, VisibilityComponent> | undefined;
   if (!meshComponents) return;
 
-  for (const [_, mesh] of meshComponents) {
+  for (const [entityId, mesh] of meshComponents) {
+    // Check visibility
+    if (visibilityComponents) {
+      const vis = visibilityComponents.get(entityId);
+      if (vis && vis.visible === false) {
+        continue; // skip invisible meshes
+      }
+    }
     // Only render meshes with matching topology (default to triangle-list if not specified)
     const meshTopology = mesh.topology || 'triangle-list';
     if (meshTopology === topology && mesh.gpuVertexBuffer && mesh.gpuIndexBuffer) {
