@@ -42,6 +42,6 @@
   </div>
 
   {#each Array.from(components) as [componentType] (componentType)}
-    <ComponentCard {componentType} />
+    <ComponentCard {componentType} {entityId} {ecs} />
   {/each}
 </div>

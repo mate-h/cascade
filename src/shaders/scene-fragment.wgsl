@@ -45,5 +45,5 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
   let fog_color = vec3f(0.1, 0.1, 0.15);
   let color_with_fog = mix(fog_color, final_color, fog_factor);
   
-  return vec4f(color_with_fog, 1.0);
+  return vec4f(input.color, 1.0);
 } 

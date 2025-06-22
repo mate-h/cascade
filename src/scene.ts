@@ -17,6 +17,8 @@ import {
   type ActiveCamera,
 } from "./ecs/components";
 import { createCube, createGrid, createVertexBuffer } from "./utils/geometry";
+import { activeCameraId } from "./stores/camera";
+import { vec2, vec3 } from "wgpu-matrix";
 
 export const createErosionScene = (width: number, height: number): ECS => {
   const ecs = createECS();
@@ -29,7 +31,7 @@ export const createErosionScene = (width: number, height: number): ECS => {
     {
       type: "texture",
       format: "rgba32float",
-      size: [width, height],
+      size: vec2.create(width, height),
       usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING,
     },
   );
@@ -42,7 +44,7 @@ export const createErosionScene = (width: number, height: number): ECS => {
     {
       type: "texture",
       format: "rgba32float",
-      size: [width, height],
+      size: vec2.create(width, height),
       usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING,
     },
   );
@@ -79,7 +81,7 @@ export const createErosionScene = (width: number, height: number): ECS => {
     COMPONENT_TYPES.COMPUTE_PASS,
     {
       shader: "erosion.wgsl",
-      workgroups: [Math.ceil(width / 8), Math.ceil(height / 8), 1],
+      workgroups: vec3.create(Math.ceil(width / 8), Math.ceil(height / 8), 1),
     },
   );
   addComponent<DependencyComponent>(
@@ -131,8 +133,9 @@ export const create3DScene = (width: number, height: number): ECS => {
       aspect: width / height,
       near: 0.1,
       far: 100,
-      up: [0, 1, 0],
-      target: [0, 0, 0],
+      up: vec3.create(0, 1, 0),
+      showGizmo: true,
+      target: vec3.create(0, 0, 0),
     },
   );
 
@@ -142,14 +145,16 @@ export const create3DScene = (width: number, height: number): ECS => {
     camera,
     COMPONENT_TYPES.TRANSFORM_3D,
     {
-      position: [5, 3, 5],
-      rotation: [0, 0, 0],
-      scale: [1, 1, 1],
+      position: vec3.create(5, 3, 5),
+      rotation: vec3.create(0, 0, 0),
+      scale: vec3.create(1, 1, 1),
     },
   );
 
   // Mark as active camera
   addComponent<ActiveCamera>(ecs, camera, COMPONENT_TYPES.ACTIVE_CAMERA, {});
+
+  activeCameraId.set(camera);
 
   // Create orbit controls for the camera
   addComponent<OrbitControlsComponent>(
@@ -160,7 +165,7 @@ export const create3DScene = (width: number, height: number): ECS => {
       azimuth: Math.PI / 4, // 45 degrees
       elevation: Math.PI / 6, // 30 degrees
       distance: 8,
-      target: [0, 0, 0],
+      target: vec3.create(0, 0, 0),
       minDistance: 1,
       maxDistance: 50,
       rotationSpeed: 0.01,
@@ -170,6 +175,23 @@ export const create3DScene = (width: number, height: number): ECS => {
       damping: 0.3,
     },
   );
+
+  // Create second camera (game camera)
+  const gameCam = createEntity(ecs);
+  addComponent<CameraComponent>(ecs, gameCam, COMPONENT_TYPES.CAMERA, {
+    fov: Math.PI / 3,
+    aspect: width / height,
+    near: 0.1,
+    far: 100,
+    up: vec3.create(0, 1, 0),
+    showGizmo: true,
+    target: vec3.create(0, 0, 0),
+  });
+  addComponent<Transform3DComponent>(ecs, gameCam, COMPONENT_TYPES.TRANSFORM_3D, {
+    position: vec3.create(0, 6, 12),
+    rotation: vec3.create(0, 0, 0),
+    scale: vec3.create(1, 1, 1),
+  });
 
   // Create cube entity
   const cube = createEntity(ecs);
@@ -193,9 +215,9 @@ export const create3DScene = (width: number, height: number): ECS => {
     cube,
     COMPONENT_TYPES.TRANSFORM_3D,
     {
-      position: [0, 1, 0], // Elevated above ground
-      rotation: [0, 0, 0],
-      scale: [1, 1, 1],
+      position: vec3.create(0, 1, 0), // Elevated above ground
+      rotation: vec3.create(0, 0, 0),
+      scale: vec3.create(1, 1, 1),
     },
   );
 
@@ -237,9 +259,9 @@ export const create3DScene = (width: number, height: number): ECS => {
     grid,
     COMPONENT_TYPES.TRANSFORM_3D,
     {
-      position: [0, 0, 0],
-      rotation: [0, 0, 0],
-      scale: [1, 1, 1],
+      position: vec3.create(0, 0, 0),
+      rotation: vec3.create(0, 0, 0),
+      scale: vec3.create(1, 1, 1),
     },
   );
 

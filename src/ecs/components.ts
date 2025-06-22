@@ -1,8 +1,9 @@
+import type { Vec2, Vec3 } from "wgpu-matrix";
 import type { EntityID } from "./types";
 
 export interface ComputePassComponent {
   shader: string;
-  workgroups: [number, number, number];
+  workgroups: Vec3;
   bindGroupLayout?: number;
 }
 
@@ -16,7 +17,7 @@ export interface RenderPassComponent {
 export interface ResourceComponent {
   type: "texture" | "buffer" | "sampler";
   format?: string;
-  size?: [number, number];
+  size?: Vec2;
   usage?: number;
   data?: ArrayBuffer;
   gpuResource?: GPUTexture | GPUBuffer | GPUSampler;
@@ -44,9 +45,9 @@ export interface TransformComponent {
 
 // 3D Rendering Components
 export interface Transform3DComponent {
-  position: [number, number, number];
-  rotation: [number, number, number];
-  scale: [number, number, number];
+  position: Vec3;
+  rotation: Vec3;
+  scale: Vec3;
 }
 
 export interface MeshComponent {
@@ -65,10 +66,11 @@ export interface CameraComponent {
   aspect: number;
   near: number;
   far: number;
-  target: [number, number, number];
-  up: [number, number, number];
+  target: Vec3;
+  up: Vec3;
   viewMatrix?: Float32Array;
   projectionMatrix?: Float32Array;
+  showGizmo: boolean;
 }
 
 // Marker component to denote which camera is used for rendering
@@ -83,7 +85,7 @@ export interface OrbitControlsComponent {
   azimuth: number;
   elevation: number;
   distance: number;
-  target: [number, number, number];
+  target: Vec3;
   minDistance: number;
   maxDistance: number;
   rotationSpeed: number;
