@@ -15,6 +15,7 @@ import {
   type OrbitControlsComponent,
   type VisibilityComponent,
   type ActiveCamera,
+  type TextLabelComponent,
 } from "./ecs/components";
 import { createCube, createGrid, createVertexBuffer } from "./utils/geometry";
 import { activeCameraId } from "./stores/camera";
@@ -151,6 +152,17 @@ export const create3DScene = (width: number, height: number): ECS => {
 
   activeCameraId.set(camera);
 
+  // Add text label to main camera
+  addComponent<TextLabelComponent>(ecs, camera, COMPONENT_TYPES.TEXT_LABEL, {
+    text: "Main Camera",
+    fontSize: 12,
+    color: "#ffffff",
+    padding: 3,
+    borderRadius: 3,
+    offset: vec3.create(0, 0.5, 0), // Slightly above camera
+    alwaysVisible: true,
+  });
+
   // Create orbit controls for the camera
   addComponent<OrbitControlsComponent>(
     ecs,
@@ -164,7 +176,7 @@ export const create3DScene = (width: number, height: number): ECS => {
       minDistance: 1,
       maxDistance: 50,
       rotationSpeed: 0.01,
-      zoomSpeed: 0.1,
+      zoomSpeed: 1.0,
       targetAzimuth: Math.PI / 4,
       targetElevation: Math.PI / 6,
       damping: 0.3,
@@ -192,6 +204,17 @@ export const create3DScene = (width: number, height: number): ECS => {
       scale: vec3.create(1, 1, 1),
     },
   );
+
+  // Add text label to game camera
+  addComponent<TextLabelComponent>(ecs, gameCam, COMPONENT_TYPES.TEXT_LABEL, {
+    text: "Game Camera",
+    fontSize: 12,
+    color: "#ffffff",
+    padding: 3,
+    borderRadius: 3,
+    offset: vec3.create(0, 0.5, 0), // Slightly above camera
+    alwaysVisible: true,
+  });
 
   // Create cube entity
   const cube = createEntity(ecs);
@@ -221,6 +244,17 @@ export const create3DScene = (width: number, height: number): ECS => {
     visible: true,
   });
 
+  // Add text label to cube
+  addComponent<TextLabelComponent>(ecs, cube, COMPONENT_TYPES.TEXT_LABEL, {
+    text: "Red Cube",
+    fontSize: 14,
+    color: "#ffffff",
+    padding: 4,
+    borderRadius: 4,
+    offset: vec3.create(0, 2.5, 0), // Above the cube
+    alwaysVisible: false,
+  });
+
   // Create grid entity
   const grid = createEntity(ecs);
   const gridGeometry = createGrid(20, 20);
@@ -248,6 +282,17 @@ export const create3DScene = (width: number, height: number): ECS => {
   // Visibility for grid
   addComponent<VisibilityComponent>(ecs, grid, COMPONENT_TYPES.VISIBILITY, {
     visible: true,
+  });
+
+  // Add text label to grid
+  addComponent<TextLabelComponent>(ecs, grid, COMPONENT_TYPES.TEXT_LABEL, {
+    text: "Ground Grid",
+    fontSize: 12,
+    color: "#ffffff",
+    padding: 3,
+    borderRadius: 3,
+    offset: vec3.create(0, 0.5, 0), // Slightly above the grid
+    alwaysVisible: true,
   });
 
   // Keep the erosion params for the UI

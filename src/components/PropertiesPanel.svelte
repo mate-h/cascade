@@ -183,7 +183,7 @@
 
 <!-- Toggle Button -->
 <button
-  class="fixed top-2 right-2 z-50 bg-bg-panel border border-border-default text-text-primary p-1 rounded shadow-lg hover:bg-bg-overlay size-6"
+  class="fixed top-2 right-2 z-50 bg-bg-panel border border-border-default text-text-primary p-1 rounded shadow-lg hover:bg-bg-overlay size-6 z-40"
   onclick={togglePanel}
   title={$panelStore.propertiesPanel.isCollapsed
     ? "Show Properties Panel (T)"

@@ -74,7 +74,7 @@ export interface CameraComponent {
 }
 
 // Marker component to denote which camera is used for rendering
-export interface ActiveCamera {}
+export type ActiveCamera = Record<string, never>;
 
 export interface MaterialComponent {
   color: Vec3;
@@ -99,6 +99,17 @@ export interface VisibilityComponent {
   visible: boolean;
 }
 
+// Text label component for 3D floating text
+export interface TextLabelComponent {
+  text: string;
+  fontSize: number;
+  color: string;
+  padding: number;
+  borderRadius: number;
+  offset: Vec3; // Offset from the transform position
+  alwaysVisible: boolean; // Whether to show even when behind objects
+}
+
 export const COMPONENT_TYPES = {
   COMPUTE_PASS: "ComputePass",
   RENDER_PASS: "RenderPass",
@@ -114,4 +125,5 @@ export const COMPONENT_TYPES = {
   ORBIT_CONTROLS: "OrbitControls",
   ACTIVE_CAMERA: "ActiveCamera",
   VISIBILITY: "Visibility",
+  TEXT_LABEL: "TextLabel",
 } as const;
