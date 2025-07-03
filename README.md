@@ -10,6 +10,8 @@ A modern 3D web application built with **WebGPU**, **Entity Component System (EC
 - 🏗️ **ECS Architecture** - Clean separation of data (components) and logic (systems)
 - 🎯 **Orbit Controls** - Mouse-driven camera controls (drag to rotate, scroll to zoom)
 - 🔍 **Entity Inspector** - Collapsible panel showing ECS structure with entity selection
+- 🖼️ **Render Graph** - Node-based system orchestrating GPU compute and render passes
+- 🌧️ **Procedural Erosion** - GPU-accelerated terrain erosion simulation
 - ⚡ **Functional Programming** - Pure functions, immutable patterns, and closures
 - 🔄 **Hot Module Reload** - Development-friendly with proper resource cleanup
 - 🎨 **Modern UI** - Dark theme with SF Mono typography and UnoCSS styling
@@ -53,7 +55,7 @@ The application displays:
 
 ```bash
 git clone <repository-url>
-cd erosion
+cd cascade
 ```
 
 ### 2. Install Dependencies
@@ -92,7 +94,7 @@ pnpm preview      # Preview production build locally
 
 ### Type Checking
 ```bash
-pnpm check        # Run Svelte type checking
+pnpm exec tsc --noEmit       # Strict compile-time type checking
 ```
 
 ## Project Structure
@@ -105,7 +107,14 @@ pnpm check        # Run Svelte type checking
 │   ├── components/        # Svelte UI components
 │   │   ├── CanvasPanel.svelte
 │   │   ├── ECSPanel.svelte
-│   │   └── EntityCard.svelte
+│   │   ├── PropertiesPanel.svelte
+│   │   ├── FloatingText.svelte
+│   │   ├── EntityCard.svelte
+│   │   ├── ComponentCard.svelte
+│   │   ├── PropertyEditor.svelte
+│   │   ├── BooleanEditor.svelte
+│   │   ├── NumberEditor.svelte
+│   │   └── StringEditor.svelte
 │   ├── ecs/              # Entity Component System
 │   │   ├── components.ts  # Component definitions
 │   │   ├── systems/       # System implementations
@@ -130,9 +139,10 @@ The application follows a **functional ECS architecture**:
 
 ### Key Systems
 
-- **`render3DSystem`** - WebGPU rendering with matrices and lighting
+- **`render3DSystem`** - Forward rendering pipeline for scene geometry
 - **`orbitControlsSystem`** - Mouse-based camera controls
-- **`erosionSystem`** - Placeholder for future simulation logic
+- **`renderGraphSystem`** - Modular render graph orchestrating compute & render passes
+- **`erosionSystem`** - Procedural terrain erosion simulation example
 
 ### WebGPU Integration
 

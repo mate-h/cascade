@@ -225,14 +225,22 @@ src/
 ├── components/           # Svelte UI components
 │   ├── CanvasPanel.svelte
 │   ├── ECSPanel.svelte
-│   └── EntityCard.svelte
+│   ├── PropertiesPanel.svelte
+│   ├── FloatingText.svelte
+│   ├── EntityCard.svelte
+│   ├── ComponentCard.svelte
+│   ├── PropertyEditor.svelte
+│   ├── BooleanEditor.svelte
+│   ├── NumberEditor.svelte
+│   └── StringEditor.svelte
 ├── ecs/                 # Entity Component System
 │   ├── components.ts    # Component definitions
 │   ├── index.ts        # ECS exports
 │   ├── systems/        # System implementations
 │   └── types.ts        # ECS type definitions
 ├── gpu/                # WebGPU utilities
-│   └── device-only.ts  # Minimal device setup
+│   ├── device-only.ts  # Minimal device setup
+│   └── device.ts       # Canvas + device helpers
 ├── shaders/            # WGSL shader files
 ├── utils/              # Helper functions
 │   ├── dom.ts
@@ -449,4 +457,4 @@ highlight: subtle accent colors for selection states
 
 ---
 
-This style guide should be updated as the project evolves and new patterns emerge. 
+This style guide should be updated as the project evolves and new patterns emerge.
