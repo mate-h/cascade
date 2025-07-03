@@ -21,7 +21,6 @@ export const createCube = (size: number = 1.0): Mesh => {
   const cells = g.cells as Uint8Array | Uint16Array | Uint32Array;
 
   const vertices: Vertex[] = [];
-  const defaultColor: [number, number, number] = [0.8, 0.8, 0.8];
 
   for (let i = 0; i < positions.length; i += 3) {
     const pos: [number, number, number] = [
@@ -35,9 +34,9 @@ export const createCube = (size: number = 1.0): Mesh => {
 
     // Simple coloring based on normal direction (abs value gives nice RGB per face)
     const color: [number, number, number] = [
-      Math.abs(norm[0]) || defaultColor[0],
-      Math.abs(norm[1]) || defaultColor[1],
-      Math.abs(norm[2]) || defaultColor[2],
+      norm[0] * 0.5 + 0.5,
+      norm[1] * 0.5 + 0.5,
+      norm[2] * 0.5 + 0.5,
     ];
 
     vertices.push({

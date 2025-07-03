@@ -3,7 +3,7 @@ export const checkWebGPUSupport = (): boolean => {
   return !!navigator.gpu;
 };
 
-import { vec3, vec4, mat4, type Vec3 } from "wgpu-matrix";
+import { vec4, type Vec3 } from "wgpu-matrix";
 import type { CameraComponent } from "../ecs/components";
 
 /**
