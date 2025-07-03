@@ -8,6 +8,9 @@
   import type { AppState } from "./app";
   import { activeCameraId } from "./stores/camera";
   import { COMPONENT_TYPES, addComponent } from "./ecs";
+  import { showFloatingText } from "./stores/labels";
+  import CommandPalette from "./components/CommandPalette.svelte";
+  import { commandPaletteOpen } from "./commands";
 
   let appState = $state<AppState | null>(null);
   let error = $state<string | null>(null);
@@ -59,6 +62,28 @@
       return;
     }
 
+    // Open command palette with Ctrl+K / Cmd+K
+    if (
+      event.key.toLowerCase() === "k" &&
+      (event.ctrlKey || event.metaKey)
+    ) {
+      event.preventDefault();
+      commandPaletteOpen.set(true);
+      return;
+    }
+
+    // Toggle floating text labels with "L"
+    if (
+      event.key.toLowerCase() === "l" &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey
+    ) {
+      event.preventDefault();
+      showFloatingText.toggle();
+      return; // Don't continue processing other shortcuts
+    }
+
     // Get all camera entities
     const cameraComponents = appState.ecs.components.get(COMPONENT_TYPES.CAMERA);
     if (!cameraComponents) return;
@@ -99,7 +124,11 @@
     <!-- Fullscreen Canvas -->
     <CanvasPanel {appState} />
     <!-- Floating Text Labels -->
-    <FloatingText {appState} />
+    {#if $showFloatingText}
+      <FloatingText {appState} />
+    {/if}
+    <!-- Command Palette -->
+    <CommandPalette />
     <!-- Collapsible Panel Overlay -->
     <ECSPanel {appState} />
     <!-- Properties Panel -->
@@ -126,6 +155,11 @@
         </span>
         <span class="text-text-secondary text-xs">(1, 2 to switch)</span>
       </div>
+      <button type="button" class="flex items-center gap-2 mt-1 focus:outline-none" onclick={() => showFloatingText.toggle()} title="Toggle labels (L)">
+        <span class="text-accent-yellow">Labels:</span>
+        <span class="font-mono">{$showFloatingText ? "On" : "Off"}</span>
+        <span class="text-text-secondary text-xs">(L)</span>
+      </button>
     </div>
   {:else}
     <div class="flex justify-center items-center h-full w-full text-text-primary">
