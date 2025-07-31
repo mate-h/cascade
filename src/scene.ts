@@ -131,7 +131,7 @@ export const create3DScene = (width: number, height: number): ECS => {
     fov: Math.PI / 4, // 45 degrees
     aspect: width / height,
     near: 0.1,
-    far: 100,
+    far: 200,
     up: vec3.create(0, 1, 0),
     showGizmo: true,
     target: vec3.create(0, 0, 0),
@@ -176,7 +176,7 @@ export const create3DScene = (width: number, height: number): ECS => {
       distance: 8,
       target: vec3.create(0, 0, 0),
       minDistance: 1,
-      maxDistance: 50,
+      maxDistance: 100,
       rotationSpeed: 0.01,
       zoomSpeed: 1.0,
       targetAzimuth: Math.PI / 4,
@@ -231,7 +231,7 @@ export const create3DScene = (width: number, height: number): ECS => {
   });
 
   addComponent<Transform3DComponent>(ecs, cube, COMPONENT_TYPES.TRANSFORM_3D, {
-    position: vec3.create(0, 3, 0), // Elevated above grid (bottom face at Y=1)
+    position: vec3.create(0, 0, 0), // Elevated above grid (bottom face at Y=1)
     rotation: vec3.create(0, 0, 0),
     scale: vec3.create(1, 1, 1),
   });

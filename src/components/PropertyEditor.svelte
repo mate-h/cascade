@@ -2,6 +2,7 @@
   import NumberEditor from './NumberEditor.svelte';
   import StringEditor from './StringEditor.svelte';
   import BooleanEditor from './BooleanEditor.svelte';
+  import VectorEditor from './VectorEditor.svelte';
 
   export interface PropertyConfig {
     entityId: number;
@@ -13,6 +14,8 @@
     min?: number;
     max?: number;
     step?: number;
+    // Vector-specific config
+    vectorSize?: number;
   }
 
   let { 
@@ -63,6 +66,15 @@
   {:else if config.type === 'boolean'}
     <BooleanEditor 
       value={config.value}
+      onUpdate={handleUpdate}
+    />
+  {:else if config.type === 'vec2' || config.type === 'vec3' || config.type === 'vec4'}
+    <VectorEditor 
+      value={config.value}
+      min={config.min}
+      max={config.max}
+      step={config.step}
+      resetValue={config.propertyKey === 'scale' ? 1 : 0}
       onUpdate={handleUpdate}
     />
   {:else}

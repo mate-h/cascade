@@ -78,9 +78,16 @@
     verticalResizeHandler?.cleanup();
   });
 
+  // Reactive trigger for component updates
+  let componentUpdateTrigger = $state(0);
+
   const selectedEntityComponents = $derived(
     $selectedEntityId !== null
-      ? getEntityComponents($selectedEntityId, appState.ecs)
+      ? (() => {
+          // Force reactivity by accessing the trigger
+          componentUpdateTrigger;
+          return getEntityComponents($selectedEntityId, appState.ecs);
+        })()
       : new Map(),
   );
 
@@ -141,7 +148,7 @@
       componentType,
       propertyKey,
       value,
-      type: typeof value,
+      type: config.type || typeof value,
       ...config,
     };
   }
@@ -155,6 +162,9 @@
     if (component) {
       component[selectedProperty.propertyKey] = newValue;
       selectedProperty.value = newValue;
+      
+      // Trigger reactivity update
+      componentUpdateTrigger++;
     }
   }
 

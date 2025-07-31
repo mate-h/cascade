@@ -2,6 +2,7 @@
   import { isEditableProperty } from "../utils/property-config";
   import type { PropertyConfig } from "./PropertyEditor.svelte";
   import type { AppState } from "../app";
+  import { CONFIG } from "../config";
 
   let {
     selectedProperty,
@@ -25,6 +26,14 @@
   const formatValue = (value: any): string => {
     if (value === null || value === undefined) {
       return "null";
+    }
+
+    // Check if value is a vector (Float32Array or array with 2-4 components)
+    if ((Array.isArray(value) || value instanceof Float32Array) && value.length >= 2 && value.length <= 4) {
+      // first convert to regular array
+      const regularArray = Array.from(value);
+      const div = 10 ** CONFIG.DECIMAL_PRECISION;
+      return `[${regularArray.map(v => Math.round(v * div) / div).join(', ')}]`;
     }
 
     if (Array.isArray(value)) {
@@ -121,6 +130,11 @@
                 >
                   Entity {value}
                 </span>
+              {:else if (Array.isArray(value) || value instanceof Float32Array) && value.length >= 2 && value.length <= 4}
+                <span
+                  class:text-text-primary={!isPropertySelected(componentType, key)}
+                  class:text-white={isPropertySelected(componentType, key)}
+                >{formatValue(value)}</span>
               {:else if Array.isArray(value)}
                 <div
                   class:text-text-muted={!isPropertySelected(componentType, key)}
@@ -208,7 +222,9 @@
               class:text-text-muted={!isPropertySelected(componentType, key)}
               class:text-white={isPropertySelected(componentType, key)}
             >
-              {#if Array.isArray(value)}
+              {#if (Array.isArray(value) || value instanceof Float32Array) && value.length >= 2 && value.length <= 4}
+                vec{value.length}
+              {:else if Array.isArray(value)}
                 Array[{value.length}]
               {:else if typeof value === "object" && value !== null}
                 Object

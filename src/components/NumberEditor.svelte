@@ -1,20 +1,31 @@
 <script lang="ts">
   let { 
     value, 
+    label = "Value",
     min = 0, 
     max = 100, 
     step = 1,
-    onUpdate 
+    onUpdate,
+    showRange = true,
+    showSlider = true
   }: {
     value: number;
+    label?: string;
     min?: number;
     max?: number;
     step?: number;
     onUpdate: (newValue: number) => void;
+    showRange?: boolean;
+    showSlider?: boolean;
   } = $props();
 
   let currentValue = $state(value);
   let isInteger = $derived(step >= 1 || Number.isInteger(step));
+
+  // Update currentValue when the value prop changes
+  $effect(() => {
+    currentValue = value;
+  });
 
   function handleSliderChange(event: Event) {
     const target = event.target as HTMLInputElement;
@@ -42,7 +53,7 @@
 
 <div class="space-y-2">
   <div class="flex items-center gap-2">
-    <label for={inputId} class="text-text-secondary text-xs min-w-12">Value:</label>
+    <label for={inputId} class="text-text-secondary text-xs min-w-12">{label}:</label>
     <input
       id={inputId}
       type="number"
@@ -55,26 +66,32 @@
     />
   </div>
 
-  <div class="space-y-1">
-    <div class="flex justify-between text-xs text-text-muted">
-      <span>{min}</span>
-      <span class="text-text-primary">{formatValue(currentValue)}</span>
-      <span>{max}</span>
+  {#if showSlider}
+    <div class="space-y-1">
+      {#if showRange}
+        <div class="flex justify-between text-xs text-text-muted">
+          <span>{min}</span>
+          <span class="text-text-primary">{formatValue(currentValue)}</span>
+          <span>{max}</span>
+        </div>
+      {/if}
+      <input
+        type="range"
+        bind:value={currentValue}
+        {min}
+        {max}
+        {step}
+        oninput={handleSliderChange}
+        class="w-full h-2 bg-bg-secondary rounded-lg appearance-none cursor-pointer slider"
+      />
     </div>
-    <input
-      type="range"
-      bind:value={currentValue}
-      {min}
-      {max}
-      {step}
-      oninput={handleSliderChange}
-      class="w-full h-2 bg-bg-secondary rounded-lg appearance-none cursor-pointer slider"
-    />
-  </div>
+  {/if}
 
-  <div class="text-xs text-text-muted">
-    Range: {min} to {max} • Step: {step}
-  </div>
+  {#if showRange}
+    <div class="text-xs text-text-muted">
+      Range: {min} to {max} • Step: {step}
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -83,31 +100,31 @@
     height: 16px;
     width: 16px;
     border-radius: 50%;
-    background: rgb(var(--accent-blue));
+    background: #3b82f6;
     cursor: pointer;
-    border: 2px solid rgb(var(--bg-primary));
-    box-shadow: 0 0 0 1px rgb(var(--border-default));
+    border: 2px solid #1f2937;
+    box-shadow: 0 0 0 1px #374151;
   }
 
   .slider::-moz-range-thumb {
     height: 16px;
     width: 16px;
     border-radius: 50%;
-    background: rgb(var(--accent-blue));
+    background: #3b82f6;
     cursor: pointer;
-    border: 2px solid rgb(var(--bg-primary));
-    box-shadow: 0 0 0 1px rgb(var(--border-default));
+    border: 2px solid #1f2937;
+    box-shadow: 0 0 0 1px #374151;
   }
 
   .slider::-webkit-slider-track {
-    background: rgb(var(--bg-panel));
-    border: 1px solid rgb(var(--border-subtle));
+    background: #374151;
+    border: 1px solid #4b5563;
     border-radius: 4px;
   }
 
   .slider::-moz-range-track {
-    background: rgb(var(--bg-panel));
-    border: 1px solid rgb(var(--border-subtle));
+    background: #374151;
+    border: 1px solid #4b5563;
     border-radius: 4px;
   }
 </style> 

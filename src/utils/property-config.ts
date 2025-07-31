@@ -3,6 +3,8 @@ export interface PropertyMetadata {
   max?: number;
   step?: number;
   editable?: boolean;
+  type?: string;
+  vectorSize?: number;
 }
 
 // Default configurations for common property types
@@ -39,6 +41,8 @@ const defaultConfigs: Record<string, PropertyMetadata> = {
   height: { min: 0.1, max: 100, step: 0.1 },
   width: { min: 0.1, max: 100, step: 0.1 },
   depth: { min: 0.1, max: 100, step: 0.1 },
+
+  far: { min: 0.1, max: 1000, step: 0.1 },
 };
 
 export function getPropertyConfig(
@@ -46,6 +50,50 @@ export function getPropertyConfig(
   propertyKey: string,
   value: any,
 ): PropertyMetadata {
+  // Check if value is a vector (Float32Array or array with 2-4 components)
+  if (Array.isArray(value) || value instanceof Float32Array) {
+    const length = value.length;
+    if (length >= 2 && length <= 4) {
+      const vectorType = `vec${length}`;
+      
+      // Vector-specific configurations
+      if (propertyKey === 'position') {
+        return { 
+          type: vectorType, 
+          vectorSize: length,
+          min: -10, 
+          max: 10, 
+          step: 0.1 
+        };
+      } else if (propertyKey === 'rotation') {
+        return { 
+          type: vectorType, 
+          vectorSize: length,
+          min: -Math.PI, 
+          max: Math.PI, 
+          step: 0.01 
+        };
+      } else if (propertyKey === 'scale') {
+        return { 
+          type: vectorType, 
+          vectorSize: length,
+          min: 0.01, 
+          max: 10, 
+          step: 0.01 
+        };
+      } else {
+        // Generic vector config
+        return { 
+          type: vectorType, 
+          vectorSize: length,
+          min: -10, 
+          max: 10, 
+          step: 0.1 
+        };
+      }
+    }
+  }
+
   // Try exact match first
   const exactKey = `${componentType.toLowerCase()}.${propertyKey.toLowerCase()}`;
   if (defaultConfigs[exactKey]) {
@@ -80,13 +128,17 @@ export function isEditableProperty(value: any, componentType?: string, propertyK
   const type = typeof value;
   const isEditableType = type === "number" || type === "string" || type === "boolean";
   
+  // Check if value is a vector (Float32Array or array with 2-4 components)
+  const isVector = (Array.isArray(value) || value instanceof Float32Array) && 
+                   value.length >= 2 && value.length <= 4;
+  
   // If we have component and property info, check if it's explicitly marked as non-editable
-  if (componentType && propertyKey && isEditableType) {
+  if (componentType && propertyKey && (isEditableType || isVector)) {
     const config = getPropertyConfig(componentType, propertyKey, value);
     if (config.editable === false) {
       return false;
     }
   }
   
-  return isEditableType;
+  return isEditableType || isVector;
 }
