@@ -21,6 +21,8 @@ interface RenderingResources {
   triangleBindGroup?: GPUBindGroup;
   lineBindGroup?: GPUBindGroup;
   depthTexture?: GPUTexture;
+  entityUniformBuffers: Map<number, GPUBuffer>;
+  entityBindGroups: Map<number, { triangle: GPUBindGroup; line: GPUBindGroup }>;
   initialized: boolean;
 }
 
@@ -31,6 +33,8 @@ const createRenderingResources = (): RenderingResources => ({
   triangleBindGroup: undefined,
   lineBindGroup: undefined,
   depthTexture: undefined,
+  entityUniformBuffers: new Map(),
+  entityBindGroups: new Map(),
   initialized: false,
 });
 
@@ -43,7 +47,6 @@ export const render3DSystem = (ecs: ECS, gpu: MinimalWebGPUState): void => {
     }
 
     updateCamera(ecs, gpu);
-    updateUniforms(ecs, gpu);
     render(ecs, gpu);
   } catch (error) {
     console.warn("WebGPU render error (possibly due to device loss):", error);
@@ -86,11 +89,58 @@ const createDepthTexture = (gpu: MinimalWebGPUState): GPUTexture => {
   });
 };
 
+// Calculate uniform buffer layout dynamically
+const calculateUniformLayout = () => {
+  const layout = {
+    view_projection: { offset: 0, size: 16 }, // mat4x4f
+    view: { offset: 16, size: 16 }, // mat4x4f
+    projection: { offset: 32, size: 16 }, // mat4x4f
+    model: { offset: 48, size: 16 }, // mat4x4f
+    camera_position: { offset: 64, size: 4 }, // vec4f
+    time: { offset: 68, size: 1 }, // f32
+  };
+  
+  const calculatedFloats = Math.max(...Object.values(layout).map(field => field.offset + field.size));
+  // Ensure we meet WebGPU's minimum binding size requirement (288 bytes = 72 floats)
+  const totalFloats = Math.max(calculatedFloats, 72);
+  const totalBytes = totalFloats * 4; // 4 bytes per float
+  
+  return { layout, totalFloats, totalBytes };
+};
+
 const createUniformBuffer = (gpu: MinimalWebGPUState): GPUBuffer => {
+  const { totalBytes } = calculateUniformLayout();
   return gpu.device.createBuffer({
-    size: 256, // Aligned uniform buffer size
+    size: totalBytes,
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
   });
+};
+
+const createEntityUniformBuffer = (gpu: MinimalWebGPUState): GPUBuffer => {
+  const { totalBytes } = calculateUniformLayout();
+  return gpu.device.createBuffer({
+    size: totalBytes,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+};
+
+const createEntityBindGroups = (
+  gpu: MinimalWebGPUState,
+  uniformBuffer: GPUBuffer,
+  trianglePipeline: GPURenderPipeline,
+  linePipeline: GPURenderPipeline,
+): { triangle: GPUBindGroup; line: GPUBindGroup } => {
+  const triangleBindGroup = gpu.device.createBindGroup({
+    layout: trianglePipeline.getBindGroupLayout(0),
+    entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
+  });
+
+  const lineBindGroup = gpu.device.createBindGroup({
+    layout: linePipeline.getBindGroupLayout(0),
+    entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
+  });
+
+  return { triangle: triangleBindGroup, line: lineBindGroup };
 };
 
 const createRenderPipeline = (
@@ -269,75 +319,92 @@ const updateCamera = (ecs: ECS, gpu: MinimalWebGPUState): void => {
   }
 };
 
+const buildModelMatrix = (transform: Transform3DComponent): Float32Array => {
+  const modelMatrix = mat4.identity();
+
+  // Apply translation
+  mat4.translate(modelMatrix, transform.position, modelMatrix);
+
+  // Apply rotation (assuming Euler angles in radians)
+  mat4.rotateX(modelMatrix, transform.rotation[0], modelMatrix);
+  mat4.rotateY(modelMatrix, transform.rotation[1], modelMatrix);
+  mat4.rotateZ(modelMatrix, transform.rotation[2], modelMatrix);
+
+  // Apply scale
+  mat4.scale(modelMatrix, transform.scale, modelMatrix);
+
+  return modelMatrix;
+};
+
 const createUniformData = (
   camera: CameraComponent,
   position: Vec3,
+  modelMatrix: Float32Array,
 ): Float32Array => {
   const viewProjectionMatrix = mat4.multiply(
     camera.projectionMatrix!,
     camera.viewMatrix!,
   );
   const time = Date.now() / 1000;
-  const uniformData = new Float32Array(64); // 256 bytes / 4 = 64 floats
+  const { layout, totalFloats } = calculateUniformLayout();
+  const uniformData = new Float32Array(totalFloats);
 
-  // View-projection matrix (16 floats)
-  uniformData.set(viewProjectionMatrix, 0);
-  // View matrix (16 floats)
-  uniformData.set(camera.viewMatrix!, 16);
-  // Projection matrix (16 floats)
-  uniformData.set(camera.projectionMatrix!, 32);
-  // Camera position (3 floats, padded to 4)
-  uniformData.set([position[0], position[1], position[2], 0], 48);
-  // Time (1 float)
-  uniformData[52] = time;
+  // Use layout to set uniform data dynamically
+  uniformData.set(viewProjectionMatrix, layout.view_projection.offset);
+  uniformData.set(camera.viewMatrix!, layout.view.offset);
+  uniformData.set(camera.projectionMatrix!, layout.projection.offset);
+  uniformData.set([position[0], position[1], position[2], 0], layout.camera_position.offset);
+  uniformData[layout.time.offset] = time;
+  uniformData.set(modelMatrix, layout.model.offset);
 
   return uniformData;
 };
 
-const updateUniforms = (ecs: ECS, gpu: MinimalWebGPUState): void => {
-  if (!renderingResources.uniformBuffer) return;
-
-  const cameraComponents = ecs.components.get(COMPONENT_TYPES.CAMERA) as
-    | Map<number, CameraComponent>
-    | undefined;
-  const transformComponents = ecs.components.get(
-    COMPONENT_TYPES.TRANSFORM_3D,
-  ) as Map<number, Transform3DComponent> | undefined;
-  const activeCameras = ecs.components.get(COMPONENT_TYPES.ACTIVE_CAMERA) as
-    | Map<number, {}>
-    | undefined;
-  if (!cameraComponents) return;
-
-  for (const [entityId, camera] of cameraComponents) {
-    if (activeCameras && !activeCameras.has(entityId)) continue;
-
-    const transform = transformComponents?.get(entityId);
-    if (!transform) continue;
-
-    if (camera.viewMatrix && camera.projectionMatrix) {
-      const uniformData = createUniformData(camera, transform.position);
-      gpu.device.queue.writeBuffer(
-        renderingResources.uniformBuffer,
-        0,
-        uniformData,
-      );
-      break; // Use first active camera found
-    }
-  }
-};
+// updateUniforms is no longer needed since we update uniforms per entity in renderMeshesWithTopology
 
 const renderMeshesWithTopology = (
   renderPass: GPURenderPassEncoder,
   ecs: ECS,
+  gpu: MinimalWebGPUState,
   topology: "triangle-list" | "line-list",
 ): void => {
   const meshComponents = ecs.components.get(COMPONENT_TYPES.MESH) as
     | Map<number, MeshComponent>
     | undefined;
-  const visibilityComponents = ecs.components.get(
-    COMPONENT_TYPES.VISIBILITY,
-  ) as Map<number, VisibilityComponent> | undefined;
-  if (!meshComponents) return;
+  const visibilityComponents = ecs.components.get(COMPONENT_TYPES.VISIBILITY) as
+    | Map<number, VisibilityComponent>
+    | undefined;
+  const transformComponents = ecs.components.get(
+    COMPONENT_TYPES.TRANSFORM_3D,
+  ) as Map<number, Transform3DComponent> | undefined;
+  const cameraComponents = ecs.components.get(COMPONENT_TYPES.CAMERA) as
+    | Map<number, CameraComponent>
+    | undefined;
+  const activeCameras = ecs.components.get(COMPONENT_TYPES.ACTIVE_CAMERA) as
+    | Map<number, {}>
+    | undefined;
+
+  if (!meshComponents) {
+    return;
+  }
+
+  // Get active camera
+  let activeCamera: CameraComponent | undefined;
+  let cameraPosition: Vec3 | undefined;
+
+  for (const [entityId, camera] of cameraComponents || []) {
+    if (activeCameras && !activeCameras.has(entityId)) continue;
+    activeCamera = camera;
+    const transform = transformComponents?.get(entityId);
+    if (transform) {
+      cameraPosition = transform.position;
+    }
+    break;
+  }
+
+  if (!activeCamera || !cameraPosition) {
+    return;
+  }
 
   for (const [entityId, mesh] of meshComponents) {
     // Check visibility
@@ -347,6 +414,7 @@ const renderMeshesWithTopology = (
         continue; // skip invisible meshes
       }
     }
+
     // Only render meshes with matching topology (default to triangle-list if not specified)
     const meshTopology = mesh.topology || "triangle-list";
     if (
@@ -354,6 +422,43 @@ const renderMeshesWithTopology = (
       mesh.gpuVertexBuffer &&
       mesh.gpuIndexBuffer
     ) {
+      // Get or create uniform buffer for this entity
+      let entityUniformBuffer = renderingResources.entityUniformBuffers.get(entityId);
+      let entityBindGroups = renderingResources.entityBindGroups.get(entityId);
+
+      if (!entityUniformBuffer || !entityBindGroups) {
+        entityUniformBuffer = createEntityUniformBuffer(gpu);
+        entityBindGroups = createEntityBindGroups(
+          gpu,
+          entityUniformBuffer,
+          renderingResources.trianglePipeline!,
+          renderingResources.linePipeline!,
+        );
+        renderingResources.entityUniformBuffers.set(entityId, entityUniformBuffer);
+        renderingResources.entityBindGroups.set(entityId, entityBindGroups);
+      }
+
+      // Get transform for this entity
+      const transform = transformComponents?.get(entityId);
+      const modelMatrix = transform
+        ? buildModelMatrix(transform)
+        : mat4.identity();
+
+      // Update uniforms with model matrix for this entity
+      const uniformData = createUniformData(
+        activeCamera,
+        cameraPosition,
+        modelMatrix,
+      );
+      gpu.device.queue.writeBuffer(entityUniformBuffer, 0, uniformData);
+
+      // Set bind group for this entity
+      if (topology === "triangle-list") {
+        renderPass.setBindGroup(0, entityBindGroups.triangle);
+      } else {
+        renderPass.setBindGroup(0, entityBindGroups.line);
+      }
+
       renderPass.setVertexBuffer(0, mesh.gpuVertexBuffer);
       renderPass.setIndexBuffer(mesh.gpuIndexBuffer, "uint32");
       renderPass.drawIndexed(mesh.indexCount);
@@ -475,6 +580,13 @@ const render = (ecs: ECS, gpu: MinimalWebGPUState): void => {
     !renderingResources.lineBindGroup ||
     !renderingResources.depthTexture
   ) {
+    console.warn("Missing rendering resources:", {
+      trianglePipeline: !!renderingResources.trianglePipeline,
+      linePipeline: !!renderingResources.linePipeline,
+      triangleBindGroup: !!renderingResources.triangleBindGroup,
+      lineBindGroup: !!renderingResources.lineBindGroup,
+      depthTexture: !!renderingResources.depthTexture,
+    });
     return;
   }
 
@@ -491,12 +603,12 @@ const render = (ecs: ECS, gpu: MinimalWebGPUState): void => {
   // Render triangle meshes
   renderPass.setPipeline(renderingResources.trianglePipeline);
   renderPass.setBindGroup(0, renderingResources.triangleBindGroup);
-  renderMeshesWithTopology(renderPass, ecs, "triangle-list");
+  renderMeshesWithTopology(renderPass, ecs, gpu, "triangle-list");
 
   // Render line meshes
   renderPass.setPipeline(renderingResources.linePipeline);
   renderPass.setBindGroup(0, renderingResources.lineBindGroup);
-  renderMeshesWithTopology(renderPass, ecs, "line-list");
+  renderMeshesWithTopology(renderPass, ecs, gpu, "line-list");
 
   // Draw camera gizmos
   drawCameraGizmos(renderPass, ecs, gpu);
@@ -545,5 +657,11 @@ export const cleanup3DSystem = (): void => {
   if (renderingResources.uniformBuffer) {
     renderingResources.uniformBuffer.destroy();
   }
+  
+  // Clean up entity-specific resources
+  renderingResources.entityUniformBuffers.forEach(buffer => buffer.destroy());
+  renderingResources.entityUniformBuffers.clear();
+  renderingResources.entityBindGroups.clear();
+  
   renderingResources = createRenderingResources();
 };

@@ -2,7 +2,8 @@ struct Uniforms {
   view_projection: mat4x4f,
   view: mat4x4f,
   projection: mat4x4f,
-  camera_position: vec3f,
+  model: mat4x4f,
+  camera_position: vec4f,
   time: f32,
 }
 
@@ -26,10 +27,17 @@ struct VertexOutput {
 fn vs_main(input: VertexInput) -> VertexOutput {
   var output: VertexOutput;
   
-  let world_position = vec4f(input.position, 1.0);
+  // Apply model transformation to world position first
+  let world_position = uniforms.model * vec4f(input.position, 1.0);
   output.world_position = world_position.xyz;
   output.clip_position = uniforms.view_projection * world_position;
+  
+  // Debug: Check if model matrix is identity
+  // If model matrix is identity, world_position should equal input.position
+  
+  // Transform normal (simplified for now)
   output.normal = input.normal;
+  
   output.color = input.color;
   
   // Calculate view space position for depth-based effects
@@ -37,4 +45,4 @@ fn vs_main(input: VertexInput) -> VertexOutput {
   output.view_position = view_position.xyz;
   
   return output;
-} 
+}

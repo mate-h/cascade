@@ -11,8 +11,19 @@ import {
   orbitControlsSystem,
   cleanupOrbitControls,
   cleanup3DSystem,
+  raycastSystem,
+  renderGizmo,
+  handleGizmoInteraction,
+  setGizmoTarget,
   type ECS,
 } from "./ecs";
+import { selectedEntityId } from "./stores/selection";
+
+// Helper function to get current selected entity
+let currentSelectedEntity: number | null = null;
+selectedEntityId.subscribe(value => {
+  currentSelectedEntity = value;
+});
 
 export interface AppState {
   ecs: ECS;
@@ -73,6 +84,9 @@ const gameLoop = (appState: AppState): void => {
   erosionSystem(appState.ecs, deltaTime);
   orbitControlsSystem(appState.ecs, appState.gpu.canvas);
   render3DSystem(appState.ecs, appState.gpu);
+  
+  // Render gizmo for selected entity
+  renderGizmo(appState.ecs, appState.gpu, currentSelectedEntity);
 
   gameLoopId = requestAnimationFrame(() => gameLoop(appState));
 };
@@ -106,6 +120,9 @@ export const initializeApp = async (): Promise<AppState> => {
     initialDimensions.canvasHeight,
   );
 
+  // Add canvas to DOM
+  document.body.appendChild(canvas);
+
   // Create app state first
   const appState: AppState = {
     ecs,
@@ -113,6 +130,8 @@ export const initializeApp = async (): Promise<AppState> => {
     lastFrameTime: performance.now(),
     isRunning: true,
   };
+
+
 
   // Setup resize handling with HiDPI support
   const handleResize = () => {

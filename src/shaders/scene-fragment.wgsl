@@ -2,7 +2,8 @@ struct Uniforms {
   view_projection: mat4x4f,
   view: mat4x4f,
   projection: mat4x4f,
-  camera_position: vec3f,
+  model: mat4x4f,
+  camera_position: vec4f,
   time: f32,
 }
 
@@ -31,7 +32,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4f {
   let diffuse = diffuse_strength * light_color;
   
   // Calculate specular lighting (Blinn-Phong)
-  let view_dir = normalize(uniforms.camera_position - input.world_position);
+  let view_dir = normalize(uniforms.camera_position.xyz - input.world_position);
   let halfway_dir = normalize(light_dir + view_dir);
   let spec_strength = pow(max(dot(normal, halfway_dir), 0.0), 32.0);
   let specular = spec_strength * light_color * 0.5;

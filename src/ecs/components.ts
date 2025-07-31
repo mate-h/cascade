@@ -110,6 +110,27 @@ export interface TextLabelComponent {
   alwaysVisible: boolean; // Whether to show even when behind objects
 }
 
+// Raycast and selection components
+export interface SelectableComponent {
+  selectable: boolean;
+}
+
+export interface TransformGizmoComponent {
+  enabled: boolean;
+  mode: "translate" | "rotate" | "scale";
+  axis: "x" | "y" | "z" | "all";
+  size: number;
+  snapToGrid: boolean;
+  gridSize: number;
+}
+
+export interface RaycastResult {
+  entityId: EntityID;
+  distance: number;
+  point: Vec3;
+  normal: Vec3;
+}
+
 export const COMPONENT_TYPES = {
   COMPUTE_PASS: "ComputePass",
   RENDER_PASS: "RenderPass",
@@ -126,4 +147,7 @@ export const COMPONENT_TYPES = {
   ACTIVE_CAMERA: "ActiveCamera",
   VISIBILITY: "Visibility",
   TEXT_LABEL: "TextLabel",
+  // Selection and manipulation components
+  SELECTABLE: "Selectable",
+  TRANSFORM_GIZMO: "TransformGizmo",
 } as const;

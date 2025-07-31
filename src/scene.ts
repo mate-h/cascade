@@ -16,6 +16,8 @@ import {
   type VisibilityComponent,
   type ActiveCamera,
   type TextLabelComponent,
+  type SelectableComponent,
+  type TransformGizmoComponent,
 } from "./ecs/components";
 import { createCube, createGrid, createVertexBuffer } from "./utils/geometry";
 import { activeCameraId } from "./stores/camera";
@@ -229,7 +231,7 @@ export const create3DScene = (width: number, height: number): ECS => {
   });
 
   addComponent<Transform3DComponent>(ecs, cube, COMPONENT_TYPES.TRANSFORM_3D, {
-    position: vec3.create(0, 1, 0), // Elevated above ground
+    position: vec3.create(0, 3, 0), // Elevated above grid (bottom face at Y=1)
     rotation: vec3.create(0, 0, 0),
     scale: vec3.create(1, 1, 1),
   });
@@ -253,6 +255,20 @@ export const create3DScene = (width: number, height: number): ECS => {
     borderRadius: 4,
     offset: vec3.create(0, 2.5, 0), // Above the cube
     alwaysVisible: false,
+  });
+
+  // Make cube selectable and add transform gizmo
+  addComponent<SelectableComponent>(ecs, cube, COMPONENT_TYPES.SELECTABLE, {
+    selectable: true,
+  });
+
+  addComponent<TransformGizmoComponent>(ecs, cube, COMPONENT_TYPES.TRANSFORM_GIZMO, {
+    enabled: true,
+    mode: "translate",
+    axis: "all",
+    size: 1.0,
+    snapToGrid: false,
+    gridSize: 1.0,
   });
 
   // Create grid entity
@@ -293,6 +309,20 @@ export const create3DScene = (width: number, height: number): ECS => {
     borderRadius: 3,
     offset: vec3.create(0, 0.5, 0), // Slightly above the grid
     alwaysVisible: true,
+  });
+
+  // Make grid selectable
+  addComponent<SelectableComponent>(ecs, grid, COMPONENT_TYPES.SELECTABLE, {
+    selectable: true,
+  });
+
+  addComponent<TransformGizmoComponent>(ecs, grid, COMPONENT_TYPES.TRANSFORM_GIZMO, {
+    enabled: true,
+    mode: "translate",
+    axis: "all",
+    size: 1.0,
+    snapToGrid: true,
+    gridSize: 1.0,
   });
 
   // Keep the erosion params for the UI

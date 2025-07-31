@@ -311,14 +311,12 @@ export const cleanupOrbitControls = (canvas: HTMLCanvasElement): void => {
 ### Console Logging Standards
 
 ```typescript
-// Success messages
-console.log("Svelte + ECS + WebGPU initialized successfully!");
-
-// Warnings for recoverable errors
+// Only log errors and critical failures
+console.error("App initialization failed:", err);
 console.warn('WebGPU render error (possibly due to device loss):', error);
 
-// Errors for critical failures
-console.error("App initialization failed:", err);
+// Avoid success messages and debug logs in production code
+// Use browser dev tools for debugging instead
 ```
 
 ### Graceful Degradation
