@@ -12,6 +12,9 @@ A modern 3D web application built with **WebGPU**, **Entity Component System (EC
 - 🔍 **Entity Inspector** - Collapsible panel showing ECS structure with entity selection
 - 🖼️ **Render Graph** - Node-based system orchestrating GPU compute and render passes
 - 🌧️ **Procedural Erosion** - GPU-accelerated terrain erosion simulation
+- 🌟 **Physically Based Rendering** - PBR materials with metallic-roughness workflow
+- 🌍 **Image Based Lighting** - HDR environment maps for realistic reflections and ambient lighting
+- ☁️ **Volumetric Rendering** - Raymarching-based fog, clouds, and atmospheric effects
 - ⚡ **Functional Programming** - Pure functions, immutable patterns, and closures
 - 🔄 **Hot Module Reload** - Development-friendly with proper resource cleanup
 - 🎨 **Modern UI** - Dark theme with SF Mono typography and UnoCSS styling
@@ -23,6 +26,9 @@ The application displays:
 - A wireframe grid ground plane
 - Interactive orbit camera controls
 - Real-time ECS entity/component visualization
+- PBR materials with realistic lighting and reflections
+- Atmospheric volumetric effects using raymarching
+- HDR environment-based lighting for enhanced realism
 
 ## Tech Stack
 
@@ -34,6 +40,9 @@ The application displays:
 ### Graphics & Math
 - **[wgpu-matrix](https://github.com/greggman/wgpu-matrix)** - WebGPU-optimized matrix operations
 - **WGSL** - WebGPU Shading Language for vertex/fragment shaders
+- **PBR Materials** - Physically based rendering with metallic-roughness workflow
+- **HDR Environment Maps** - High dynamic range lighting for realistic reflections
+- **Raymarching** - GPU-accelerated volumetric rendering for atmospheric effects
 
 ### Styling & Build
 - **[UnoCSS](https://unocss.dev/)** - Utility-first CSS with Tailwind preset
@@ -143,6 +152,9 @@ The application follows a **functional ECS architecture**:
 - **`orbitControlsSystem`** - Mouse-based camera controls
 - **`renderGraphSystem`** - Modular render graph orchestrating compute & render passes
 - **`erosionSystem`** - Procedural terrain erosion simulation example
+- **`pbrSystem`** - Physically based rendering with material management
+- **`iblSystem`** - Image based lighting with environment map processing
+- **`volumetricSystem`** - Raymarching-based atmospheric and volumetric effects
 
 ### WebGPU Integration
 
