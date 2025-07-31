@@ -223,16 +223,6 @@ export const render3DSystem = (ecs: ECS, gpu: MinimalWebGPUState): void => {
 ```
 src/
 ├── components/           # Svelte UI components
-│   ├── CanvasPanel.svelte
-│   ├── ECSPanel.svelte
-│   ├── PropertiesPanel.svelte
-│   ├── FloatingText.svelte
-│   ├── EntityCard.svelte
-│   ├── ComponentCard.svelte
-│   ├── PropertyEditor.svelte
-│   ├── BooleanEditor.svelte
-│   ├── NumberEditor.svelte
-│   └── StringEditor.svelte
 ├── ecs/                 # Entity Component System
 │   ├── components.ts    # Component definitions
 │   ├── index.ts        # ECS exports
@@ -393,8 +383,28 @@ export const stopApp = (appState: AppState): void => {
 
 ### Typography and Spacing
 
-- Font: Cascade Mono at 13px (`font-mono text-[13px]`)
-- Line height: 1.4 (`leading-[1.4]`)
+**✅ Font Consistency Rules**
+- **Always use 13px font size**: `text-[13px]` - never alter this size
+- **Font family**: Cascade Mono (`font-mono`)
+- **No font weight variations**: Never use bold, italic, or any other font weight
+- **Line height**: 1.4 (`leading-[1.4]`)
+- **Code editor aesthetic**: Maintain consistent monospace appearance
+
+**❌ Avoid Font Variations**
+```css
+/* Don't use these - breaks code editor consistency */
+text-sm, text-lg, text-xl
+font-bold, font-semibold, font-light
+italic, not-italic
+```
+
+**✅ Proper Typography Example**
+```svelte
+<div class="font-mono text-[13px] leading-[1.4] text-white">
+  <!-- Content with consistent typography -->
+</div>
+```
+
 - Consistent spacing using Tailwind/UnoCSS classes
 
 ### Color Scheme

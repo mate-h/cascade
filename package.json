@@ -9,7 +9,9 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@iconify-json/material-symbols": "^1.2.30",
     "@sveltejs/vite-plugin-svelte": "^5.1.0",
+    "@unocss/preset-icons": "^66.3.3",
     "@unocss/preset-uno": "^66.2.3",
     "@unocss/reset": "^66.2.3",
     "@unocss/svelte-scoped": "^66.2.3",

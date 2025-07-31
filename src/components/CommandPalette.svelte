@@ -7,7 +7,7 @@
   } from "../commands";
 
   let search = $state("");
-  let inputEl: HTMLInputElement;
+  let inputEl = $state<HTMLInputElement>();
 
   const filtered = $derived(() => {
     const q = search.trim().toLowerCase();

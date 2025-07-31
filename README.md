@@ -106,38 +106,6 @@ pnpm preview      # Preview production build locally
 pnpm exec tsc --noEmit       # Strict compile-time type checking
 ```
 
-## Project Structure
-
-```
-├── docs/
-│   └── styleguide.md      # Comprehensive style guide
-├── public/                # Static assets
-├── src/
-│   ├── components/        # Svelte UI components
-│   │   ├── CanvasPanel.svelte
-│   │   ├── ECSPanel.svelte
-│   │   ├── PropertiesPanel.svelte
-│   │   ├── FloatingText.svelte
-│   │   ├── EntityCard.svelte
-│   │   ├── ComponentCard.svelte
-│   │   ├── PropertyEditor.svelte
-│   │   ├── BooleanEditor.svelte
-│   │   ├── NumberEditor.svelte
-│   │   └── StringEditor.svelte
-│   ├── ecs/              # Entity Component System
-│   │   ├── components.ts  # Component definitions
-│   │   ├── systems/       # System implementations
-│   │   └── types.ts       # ECS types
-│   ├── gpu/              # WebGPU utilities
-│   ├── shaders/          # WGSL shader files
-│   ├── utils/            # Helper functions
-│   ├── app.ts            # Main application logic
-│   ├── main.ts           # Entry point
-│   └── scene.ts          # 3D scene setup
-├── package.json
-└── README.md
-```
-
 ## Architecture Overview
 
 The application follows a **functional ECS architecture**:

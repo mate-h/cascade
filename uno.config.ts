@@ -1,4 +1,4 @@
-import { defineConfig, presetWind3 } from 'unocss'
+import { defineConfig, presetWind3, presetIcons } from 'unocss'
 
 // GitHub Dark theme colors extracted from the provided JSON5 data
 const githubDarkColors = {
@@ -107,6 +107,7 @@ const githubDarkColors = {
 export default defineConfig({
   presets: [
     presetWind3(),
+    presetIcons(),
   ],
   theme: {
     fontFamily: {

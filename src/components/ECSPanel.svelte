@@ -210,11 +210,11 @@
 
 <!-- Toggle Button -->
 <button
-  class="fixed top-2 left-2 z-50 bg-bg-panel border border-border-default text-text-primary p-1 rounded shadow-lg hover:bg-bg-overlay size-6 z-40"
+  class="fixed top-2 left-2 z-60 bg-bg-panel border border-border-default text-text-primary p-1 rounded shadow-lg hover:bg-bg-overlay size-6"
   onclick={togglePanel}
   title={$panelStore.ecsPanel.isCollapsed ? "Show ECS Panel (N)" : "Hide ECS Panel (N)"}
 >
-  {$panelStore.ecsPanel.isCollapsed ? "📊" : "✕"}
+  {$panelStore.ecsPanel.isCollapsed ? "📊" : "×"}
 </button>
 
 <!-- Collapsible Panel -->

@@ -18,6 +18,10 @@ const defaultConfigs: Record<string, PropertyMetadata> = {
   "scale.y": { min: 0.01, max: 10, step: 0.01 },
   "scale.z": { min: 0.01, max: 10, step: 0.01 },
 
+  // Orbit controls - read-only properties
+  "orbitcontrols.azimuth": { editable: false },
+  "orbitcontrols.elevation": { editable: false },
+
   // Common shader/material properties
   opacity: { min: 0, max: 1, step: 0.01 },
   metallic: { min: 0, max: 1, step: 0.01 },
@@ -72,7 +76,17 @@ export function getPropertyConfig(
   return { editable: true };
 }
 
-export function isEditableProperty(value: any): boolean {
+export function isEditableProperty(value: any, componentType?: string, propertyKey?: string): boolean {
   const type = typeof value;
-  return type === "number" || type === "string" || type === "boolean";
+  const isEditableType = type === "number" || type === "string" || type === "boolean";
+  
+  // If we have component and property info, check if it's explicitly marked as non-editable
+  if (componentType && propertyKey && isEditableType) {
+    const config = getPropertyConfig(componentType, propertyKey, value);
+    if (config.editable === false) {
+      return false;
+    }
+  }
+  
+  return isEditableType;
 }
