@@ -103,18 +103,14 @@
           >
             <td
               class="p-1 font-mono"
-              class:text-accent-green={!isPropertySelected(componentType, key)}
+              class:text-text-primary={isEditableProperty(value, componentType, key)}
+              class:text-text-muted={!isEditableProperty(value, componentType, key)}
               class:text-white={isPropertySelected(componentType, key)}
             >
               <span
-                class:underline={isEditableProperty(value, componentType, key) && 
-                  !isPropertySelected(componentType, key)}
               >
                 {key}
               </span>
-              {#if isEditableProperty(value, componentType, key) && !isPropertySelected(componentType, key)}
-                <span class="text-accent-blue/60 ml-1 text-[10px]">●</span>
-              {/if}
             </td>
             <td class="p-1 font-mono">
               {#if isEntityReference(value, key, appState.ecs)}

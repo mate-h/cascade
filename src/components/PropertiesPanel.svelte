@@ -175,13 +175,17 @@
 
 <!-- Toggle Button -->
 <button
-  class="fixed top-2 right-2 z-60 bg-bg-panel border border-border-default text-text-primary p-1 rounded shadow-lg hover:bg-bg-overlay size-6"
+  class="fixed top-2 right-2 z-60 bg-bg-panel border border-border-default text-text-primary p-0 rounded shadow-lg hover:bg-bg-overlay size-6"
   onclick={togglePanel}
   title={$panelStore.propertiesPanel.isCollapsed
     ? "Show Properties Panel (T)"
     : "Hide Properties Panel (T)"}
 >
-  {$panelStore.propertiesPanel.isCollapsed ? "⚙️" : "×"}
+  {#if $panelStore.propertiesPanel.isCollapsed}
+    <i class="i-material-symbols:settings-rounded text-sm"></i>
+  {:else}
+    <i class="i-material-symbols:close-rounded text-sm"></i>
+  {/if}
 </button>
 
 <!-- Collapsible Properties Panel -->

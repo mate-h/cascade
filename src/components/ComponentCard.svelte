@@ -29,7 +29,11 @@
       title={isActive ? "Currently active" : "Set as active camera"}
       disabled={isActive}
     >
-      {isActive ? "🎥" : "Set Active"}
+      {#if isActive}
+        <i class="i-material-symbols:photo-camera-outline-rounded text-white size-4"></i>
+      {:else}
+        Set Active
+      {/if}
     </button>
   {/if}
 </div>

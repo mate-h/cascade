@@ -9,9 +9,8 @@
 
   let copyButtonText = $state("Copy as JSON");
   let isLoading = $state(false);
-  let buttonIcon = $state("📋");
   let highlightedEntities = $state(new Set<number>());
-  
+
   // Use panel store for collapse state and width
   let panelWidth = $state(0);
   let isResizing = $state(false);
@@ -19,7 +18,7 @@
 
   // Subscribe to panel store
   $effect(() => {
-    const unsubscribe = panelStore.subscribe(sizes => {
+    const unsubscribe = panelStore.subscribe((sizes) => {
       panelWidth = sizes.ecsPanel.width;
     });
     return unsubscribe;
@@ -39,7 +38,7 @@
   });
 
   onMount(() => {
-    resizeHandler = createResizeHandler('ecsPanel', (width) => {
+    resizeHandler = createResizeHandler("ecsPanel", (width) => {
       panelWidth = width;
     });
   });
@@ -79,14 +78,13 @@
 
   const stats = $derived(getECSStats(appState.ecs));
   const sortedEntities = $derived(
-    [...appState.ecs.entities].sort((a, b) => a - b)
+    [...appState.ecs.entities].sort((a, b) => a - b),
   );
 
   async function copyECSAsJSON() {
     if (isLoading) return;
 
     isLoading = true;
-    buttonIcon = "⏳";
     copyButtonText = "Copying...";
 
     try {
@@ -95,22 +93,18 @@
 
       await navigator.clipboard.writeText(jsonString);
 
-      buttonIcon = "✅";
       copyButtonText = "Copied!";
 
       setTimeout(() => {
-        buttonIcon = "📋";
         copyButtonText = "Copy as JSON";
         isLoading = false;
       }, 2000);
     } catch (error) {
       console.error("Failed to copy ECS JSON:", error);
 
-      buttonIcon = "❌";
       copyButtonText = "Failed to copy";
 
       setTimeout(() => {
-        buttonIcon = "📋";
         copyButtonText = "Copy as JSON";
         isLoading = false;
       }, 2000);
@@ -118,7 +112,7 @@
   }
 
   function togglePanel() {
-    panelStore.togglePanel('ecsPanel');
+    panelStore.togglePanel("ecsPanel");
   }
 
   function handleEntitySelect(entityId: number) {
@@ -210,11 +204,17 @@
 
 <!-- Toggle Button -->
 <button
-  class="fixed top-2 left-2 z-60 bg-bg-panel border border-border-default text-text-primary p-1 rounded shadow-lg hover:bg-bg-overlay size-6"
+  class="fixed top-2 left-2 z-60 bg-bg-panel border border-border-default text-text-primary p-0 rounded shadow-lg hover:bg-bg-overlay size-6"
   onclick={togglePanel}
-  title={$panelStore.ecsPanel.isCollapsed ? "Show ECS Panel (N)" : "Hide ECS Panel (N)"}
+  title={$panelStore.ecsPanel.isCollapsed
+    ? "Show ECS Panel (N)"
+    : "Hide ECS Panel (N)"}
 >
-  {$panelStore.ecsPanel.isCollapsed ? "📊" : "×"}
+  {#if $panelStore.ecsPanel.isCollapsed}
+    <i class="i-material-symbols:data-object-rounded text-sm"></i>
+  {:else}
+    <i class="i-material-symbols:close-rounded text-sm"></i>
+  {/if}
 </button>
 
 <!-- Collapsible Panel -->
@@ -240,7 +240,7 @@
         disabled={isLoading}
         title="Copy the entire ECS structure as JSON to clipboard"
       >
-        <span>{buttonIcon}</span>
+        <i class="i-material-symbols:content-copy-rounded text-sm"></i>
         <span>{copyButtonText}</span>
       </button>
 
@@ -270,7 +270,7 @@
       {/each}
     {/if}
   </div>
-  
+
   <!-- Resize Handle Border -->
   {#if !$panelStore.ecsPanel.isCollapsed}
     <button
