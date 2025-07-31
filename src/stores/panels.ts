@@ -1,5 +1,19 @@
 import { writable } from "svelte/store";
 
+// Panel resize constants
+const PANEL_HEIGHT_MIN = 50;
+const PANEL_HEIGHT_PAD = 100;
+const PANEL_WIDTH_MIN = 200;
+const PANEL_WIDTH_MAX = 800;
+
+// Export constants for use in components
+export const PANEL_CONSTANTS = {
+  HEIGHT_MIN: PANEL_HEIGHT_MIN,
+  HEIGHT_PAD: PANEL_HEIGHT_PAD,
+  WIDTH_MIN: PANEL_WIDTH_MIN,
+  WIDTH_MAX: PANEL_WIDTH_MAX,
+} as const;
+
 export interface PanelState {
   isCollapsed: boolean;
   width: number;
@@ -20,6 +34,7 @@ const DEFAULT_PANEL_SIZES: PanelSizes = {
   propertiesPanel: {
     isCollapsed: true,
     width: 320, // 20rem in pixels (w-80)
+    height: 300, // Default height for split panel (more reasonable default)
   },
 };
 
@@ -87,7 +102,22 @@ function createPanelStore() {
           ...sizes,
           [panelKey]: {
             ...sizes[panelKey],
-            width: Math.max(200, Math.min(800, width)), // Clamp between 200px and 800px
+            width: Math.max(PANEL_WIDTH_MIN, Math.min(PANEL_WIDTH_MAX, width)), // Clamp between min and max
+          },
+        };
+        savePanelSizes(newSizes);
+        return newSizes;
+      });
+    },
+
+    // Set panel height
+    setPanelHeight(panelKey: keyof PanelSizes, height: number) {
+      update((sizes) => {
+        const newSizes = {
+          ...sizes,
+          [panelKey]: {
+            ...sizes[panelKey],
+            height: Math.max(PANEL_HEIGHT_MIN, Math.min(window.innerHeight - PANEL_HEIGHT_PAD, height)), // Clamp between min and max
           },
         };
         savePanelSizes(newSizes);
@@ -128,6 +158,12 @@ export interface ResizeState {
   startWidth: number;
 }
 
+export interface VerticalResizeState {
+  isResizing: boolean;
+  startY: number;
+  startHeight: number;
+}
+
 export function createResizeHandler(
   panelKey: keyof PanelSizes,
   onResize?: (width: number) => void,
@@ -158,10 +194,75 @@ export function createResizeHandler(
         ? resizeState.startWidth + deltaX // ECS panel grows to the right
         : resizeState.startWidth - deltaX; // Properties panel grows to the left
 
-    const clampedWidth = Math.max(200, Math.min(800, newWidth));
+    const clampedWidth = Math.max(PANEL_WIDTH_MIN, Math.min(PANEL_WIDTH_MAX, newWidth));
 
     onResize?.(clampedWidth);
     panelStore.setPanelWidth(panelKey, clampedWidth);
+  }
+
+  function stopResize() {
+    if (!resizeState.isResizing) return;
+
+    resizeState.isResizing = false;
+    document.body.style.cursor = "";
+    document.body.style.userSelect = "";
+  }
+
+  // Set up global event listeners
+  if (typeof window !== "undefined") {
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", stopResize);
+    document.addEventListener("mouseleave", stopResize);
+  }
+
+  return {
+    get isResizing() {
+      return resizeState.isResizing;
+    },
+    startResize,
+    cleanup() {
+      if (typeof window !== "undefined") {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", stopResize);
+        document.removeEventListener("mouseleave", stopResize);
+      }
+    },
+  };
+}
+
+export function createVerticalResizeHandler(
+  panelKey: keyof PanelSizes,
+  onResize?: (height: number) => void,
+) {
+  let resizeState: VerticalResizeState = {
+    isResizing: false,
+    startY: 0,
+    startHeight: 0,
+  };
+
+  function startResize(event: MouseEvent, currentHeight: number) {
+    resizeState.isResizing = true;
+    resizeState.startY = event.clientY;
+    resizeState.startHeight = currentHeight;
+
+    document.body.style.cursor = "row-resize";
+    document.body.style.userSelect = "none";
+
+    event.preventDefault();
+  }
+
+  function handleMouseMove(event: MouseEvent) {
+    if (!resizeState.isResizing) return;
+
+    const deltaY = event.clientY - resizeState.startY;
+    // Invert the logic: when dragging down (positive deltaY), increase the height
+    const newHeight = resizeState.startHeight + deltaY;
+
+    // Clamp the height to reasonable bounds
+    const clampedHeight = Math.max(PANEL_HEIGHT_MIN, Math.min(window.innerHeight - PANEL_HEIGHT_PAD, newHeight));
+
+    onResize?.(clampedHeight);
+    panelStore.setPanelHeight(panelKey, clampedHeight);
   }
 
   function stopResize() {

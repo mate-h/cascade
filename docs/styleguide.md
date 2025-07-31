@@ -393,7 +393,7 @@ export const stopApp = (appState: AppState): void => {
 
 ### Typography and Spacing
 
-- Font: SF Mono at 13px (`font-mono text-[13px]`)
+- Font: Cascade Mono at 13px (`font-mono text-[13px]`)
 - Line height: 1.4 (`leading-[1.4]`)
 - Consistent spacing using Tailwind/UnoCSS classes
 

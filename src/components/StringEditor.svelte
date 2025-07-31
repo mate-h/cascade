@@ -27,7 +27,7 @@
 
 <div class="space-y-2">
   <div class="flex items-center gap-2">
-    <label for={inputId} class="text-text-secondary text-xs font-medium min-w-12">Value:</label>
+    <label for={inputId} class="text-text-secondary text-xs min-w-12">Value:</label>
     <input
       id={inputId}
       type="text"

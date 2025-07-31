@@ -135,7 +135,7 @@
     <PropertiesPanel {appState} />
     
     <!-- Camera Indicator Overlay -->
-    <div class="fixed bottom-4 left-4 z-50 bg-bg-panel/90 backdrop-blur-sm border border-border-default rounded px-3 py-2 text-text-primary text-sm">
+    <div class="fixed bottom-4 left-4 z-50 bg-bg-panel/90 backdrop-blur-sm border border-border-default rounded px-3 py-2 text-text-primary">
       <div class="flex items-center gap-2">
         <span class="text-accent-blue">Camera:</span>
         <span class="font-mono">

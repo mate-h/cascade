@@ -110,7 +110,7 @@ export default defineConfig({
   ],
   theme: {
     fontFamily: {
-      mono: 'SF Mono, Monaco, Cascadia Code, Roboto Mono, monospace',
+      mono: 'Cascade Mono',
     },
     colors: {
       // GitHub theme colors
@@ -173,8 +173,8 @@ export default defineConfig({
     
     'entity-ref': 'text-accent-blue cursor-pointer underline decoration-dotted transition-all duration-200 px-1 py-0.5 rounded-sm hover:bg-accent-blue/20 hover:text-github-blue-2 hover:decoration-solid hover:shadow-sm active:bg-accent-blue/40 active:scale-95 active:shadow-md',
     
-    'btn': 'bg-accent-blue text-github-white border-none px-4 py-2 rounded-md font-mono font-medium cursor-pointer transition-all duration-200 flex items-center gap-2 min-w-[140px] justify-center hover:bg-github-blue-4 hover:-translate-y-px hover:shadow-lg active:translate-y-0 active:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none',
+    'btn': 'bg-accent-blue text-github-white border-none px-4 py-2 rounded-md font-mono cursor-pointer transition-all duration-200 flex items-center gap-2 min-w-[140px] justify-center hover:bg-github-blue-4 hover:-translate-y-px hover:shadow-lg active:translate-y-0 active:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none',
     
-    'btn-secondary': 'bg-bg-elevated text-text-primary border border-border-default px-4 py-2 rounded-md font-mono font-medium cursor-pointer transition-all duration-200 flex items-center gap-2 min-w-[140px] justify-center hover:bg-bg-overlay hover:border-border-muted hover:-translate-y-px hover:shadow-lg active:translate-y-0 active:shadow-sm',
+    'btn-secondary': 'bg-bg-elevated text-text-primary border border-border-default px-4 py-2 rounded-md font-mono cursor-pointer transition-all duration-200 flex items-center gap-2 min-w-[140px] justify-center hover:bg-bg-overlay hover:border-border-muted hover:-translate-y-px hover:shadow-lg active:translate-y-0 active:shadow-sm',
   }
 }) 

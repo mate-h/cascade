@@ -155,7 +155,7 @@ export const create3DScene = (width: number, height: number): ECS => {
   // Add text label to main camera
   addComponent<TextLabelComponent>(ecs, camera, COMPONENT_TYPES.TEXT_LABEL, {
     text: "Main Camera",
-    fontSize: 12,
+    fontSize: 13,
     color: "#ffffff",
     padding: 3,
     borderRadius: 3,
@@ -208,7 +208,7 @@ export const create3DScene = (width: number, height: number): ECS => {
   // Add text label to game camera
   addComponent<TextLabelComponent>(ecs, gameCam, COMPONENT_TYPES.TEXT_LABEL, {
     text: "Game Camera",
-    fontSize: 12,
+    fontSize: 13,
     color: "#ffffff",
     padding: 3,
     borderRadius: 3,
@@ -247,9 +247,9 @@ export const create3DScene = (width: number, height: number): ECS => {
   // Add text label to cube
   addComponent<TextLabelComponent>(ecs, cube, COMPONENT_TYPES.TEXT_LABEL, {
     text: "Red Cube",
-    fontSize: 14,
+    fontSize: 13,
     color: "#ffffff",
-    padding: 4,
+    padding: 3,
     borderRadius: 4,
     offset: vec3.create(0, 2.5, 0), // Above the cube
     alwaysVisible: false,
@@ -287,7 +287,7 @@ export const create3DScene = (width: number, height: number): ECS => {
   // Add text label to grid
   addComponent<TextLabelComponent>(ecs, grid, COMPONENT_TYPES.TEXT_LABEL, {
     text: "Ground Grid",
-    fontSize: 12,
+    fontSize: 13,
     color: "#ffffff",
     padding: 3,
     borderRadius: 3,

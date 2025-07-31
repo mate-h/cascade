@@ -31,7 +31,7 @@
   onkeydown={(e) => e.key === "Enter" && handleClick()}
 >
   <div
-    class="text-accent-blue font-semibold mb-1 flex items-center justify-between"
+    class="text-accent-blue mb-1 flex items-center justify-between"
   >
     <span>Entity {entityId}</span>
     {#if isSelected}

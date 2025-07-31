@@ -79,7 +79,7 @@
       />
       <ul class="max-h-[50vh] overflow-y-auto divide-y divide-border-subtle">
         {#if filtered().length === 0}
-          <li class="p-3 text-text-muted text-sm">No commands</li>
+          <li class="p-3 text-text-muted">No commands</li>
         {:else}
           {#each filtered() as cmd (cmd.id)}
             <li>

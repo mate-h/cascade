@@ -144,8 +144,6 @@ export const initializeApp = async (): Promise<AppState> => {
   // Start game loop
   gameLoop(appState);
 
-  console.log("Svelte + ECS + WebGPU initialized successfully!");
-
   return appState;
 };
 
@@ -174,6 +172,4 @@ export const stopApp = (appState: AppState): void => {
   if (canvas.parentNode) {
     canvas.parentNode.removeChild(canvas);
   }
-
-  console.log("App stopped and cleaned up");
 };

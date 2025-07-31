@@ -228,7 +228,7 @@
     class:opacity-0={$panelStore.ecsPanel.isCollapsed}
     class:pointer-events-none={$panelStore.ecsPanel.isCollapsed}
   >
-    <h2 class="text-text-bright mb-2 text-sm font-semibold mt-8">ECS Tree</h2>
+    <h2 class="text-text-bright mb-2 mt-8">ECS Tree</h2>
 
     <!-- Controls -->
     <div class="mb-2 p-2 bg-bg-panel rounded border border-border-subtle">
@@ -240,7 +240,7 @@
         disabled={isLoading}
         title="Copy the entire ECS structure as JSON to clipboard"
       >
-        <span class="text-sm">{buttonIcon}</span>
+        <span>{buttonIcon}</span>
         <span>{copyButtonText}</span>
       </button>
 

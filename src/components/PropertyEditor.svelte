@@ -30,9 +30,9 @@
   }
 </script>
 
-<div class="bg-bg-elevated border border-border-default rounded p-3 mb-4">
+<div class="bg-bg-elevated border border-border-default rounded p-3">
   <div class="flex items-center justify-between mb-2">
-    <h3 class="text-text-bright font-semibold text-sm">
+    <h3 class="text-text-bright">
       Editing: {config.componentType}.{config.propertyKey}
     </h3>
     <button

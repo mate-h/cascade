@@ -17,7 +17,7 @@ A modern 3D web application built with **WebGPU**, **Entity Component System (EC
 - ☁️ **Volumetric Rendering** - Raymarching-based fog, clouds, and atmospheric effects
 - ⚡ **Functional Programming** - Pure functions, immutable patterns, and closures
 - 🔄 **Hot Module Reload** - Development-friendly with proper resource cleanup
-- 🎨 **Modern UI** - Dark theme with SF Mono typography and UnoCSS styling
+- 🎨 **Modern UI** - Dark theme with Cascade Mono typography and UnoCSS styling
 
 ## Demo Scene
 

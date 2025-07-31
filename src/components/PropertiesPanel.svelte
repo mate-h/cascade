@@ -7,19 +7,23 @@
     isEditableProperty,
   } from "../utils/property-config";
   import PropertyEditor, { type PropertyConfig } from "./PropertyEditor.svelte";
-  import { panelStore, createResizeHandler } from "../stores/panels";
+  import { panelStore, createResizeHandler, createVerticalResizeHandler } from "../stores/panels";
 
   let { appState } = $props();
 
-  // Use panel store for collapse state and width
+  // Use panel store for collapse state and dimensions
   let panelWidth = $state(0);
+  let panelHeight = $state(0);
   let isResizing = $state(false);
+  let isVerticalResizing = $state(false);
   let resizeHandler: ReturnType<typeof createResizeHandler> | null = null;
+  let verticalResizeHandler: ReturnType<typeof createVerticalResizeHandler> | null = null;
 
   // Subscribe to panel store
   $effect(() => {
     const unsubscribe = panelStore.subscribe(sizes => {
       panelWidth = sizes.propertiesPanel.width;
+      panelHeight = sizes.propertiesPanel.height || 300;
     });
     return unsubscribe;
   });
@@ -37,14 +41,30 @@
     }
   });
 
+  $effect(() => {
+    if (verticalResizeHandler) {
+      const checkVerticalResize = () => {
+        isVerticalResizing = verticalResizeHandler?.isResizing || false;
+        if (isVerticalResizing) {
+          requestAnimationFrame(checkVerticalResize);
+        }
+      };
+      requestAnimationFrame(checkVerticalResize);
+    }
+  });
+
   onMount(() => {
     resizeHandler = createResizeHandler('propertiesPanel', (width) => {
       panelWidth = width;
+    });
+    verticalResizeHandler = createVerticalResizeHandler('propertiesPanel', (height) => {
+      panelHeight = height;
     });
   });
 
   onDestroy(() => {
     resizeHandler?.cleanup();
+    verticalResizeHandler?.cleanup();
   });
 
   const selectedEntityComponents = $derived(
@@ -212,142 +232,126 @@
   {/if}
   
   <div
-    class="p-2 h-full overflow-y-auto flex-1"
+    class="flex flex-col h-full flex-1"
     class:opacity-0={$panelStore.propertiesPanel.isCollapsed}
     class:pointer-events-none={$panelStore.propertiesPanel.isCollapsed}
   >
-    <h2 class="text-text-bright mb-2 text-sm font-semibold mt-8">Properties</h2>
+    <!-- Top Section: Property List -->
+    <div 
+      class="overflow-y-auto p-2"
+      style:height={selectedProperty ? `${panelHeight}px` : "100%"}
+    >
+      <h2 class="text-text-bright mb-2 mt-8">Properties</h2>
 
-    {#if $selectedEntityId === null}
-      <div class="text-text-muted italic text-center py-4">
-        Select an entity to view its properties
-      </div>
-    {:else}
-      <!-- Property Editor -->
-      {#if selectedProperty}
-        <PropertyEditor
-          config={selectedProperty}
-          onUpdate={updateProperty}
-          onCancel={cancelPropertyEdit}
-        />
-      {/if}
-      <div class="mb-2 p-2 bg-bg-panel rounded border border-border-subtle">
-        <h3 class="text-accent-blue font-semibold mb-1">
-          Entity {$selectedEntityId}
-        </h3>
-        <div class="text-text-secondary text-xs">
-          {selectedEntityComponents.size} components
+      {#if $selectedEntityId === null}
+        <div class="text-text-muted text-center py-4">
+          Select an entity to view its properties
         </div>
-      </div>
-
-      {#if selectedEntityComponents.size === 0}
-        <div class="text-text-muted italic">No components found</div>
       {:else}
-        {#each Array.from(selectedEntityComponents) as [componentType, component] (componentType)}
-          <div
-            class="mb-3 bg-bg-elevated rounded border border-border-subtle overflow-hidden"
-          >
-            <div class="px-2 py-1 bg-bg-panel border-b border-border-subtle">
-              <h4 class="text-text-bright font-medium text-xs">
-                {componentType}
-              </h4>
-            </div>
+        <div class="mb-2 p-2 bg-bg-panel rounded border border-border-subtle">
+          <h3 class="text-accent-blue mb-1">
+            Entity {$selectedEntityId}
+          </h3>
+          <div class="text-text-secondary text-xs">
+            {selectedEntityComponents.size} components
+          </div>
+        </div>
 
-            <div class="overflow-x-auto">
-              <table class="w-full text-xs">
-                <thead>
-                  <tr class="bg-bg-secondary">
-                    <th
-                      class="text-left p-1 text-text-secondary font-medium border-b border-border-subtle"
-                      >Property</th
-                    >
-                    <th
-                      class="text-left p-1 text-text-secondary font-medium border-b border-border-subtle"
-                      >Value</th
-                    >
-                    <th
-                      class="text-left p-1 text-text-secondary font-medium border-b border-border-subtle"
-                      >Type</th
-                    >
-                  </tr>
-                </thead>
-                <tbody>
-                  {#each Object.entries(component) as [key, value]}
-                    <tr
-                      class="border-b border-border-subtle hover:bg-bg-secondary/50"
-                      class:cursor-pointer={isEditableProperty(value)}
-                      class:bg-accent-blue={selectedProperty?.componentType ===
-                        componentType && selectedProperty?.propertyKey === key}
-                      onclick={() => selectProperty(componentType, key, value)}
-                    >
-                      <td
-                        class="p-1 font-mono"
-                        class:text-accent-green={!(
-                          selectedProperty?.componentType === componentType &&
-                          selectedProperty?.propertyKey === key
-                        )}
-                        class:text-white={selectedProperty?.componentType ===
-                          componentType &&
-                          selectedProperty?.propertyKey === key}
+        {#if selectedEntityComponents.size === 0}
+          <div class="text-text-muted">No components found</div>
+        {:else}
+          {#each Array.from(selectedEntityComponents) as [componentType, component] (componentType)}
+            <div
+              class="mb-3 bg-bg-elevated rounded border border-border-subtle overflow-hidden"
+            >
+              <div class="px-2 py-1 bg-bg-panel border-b border-border-subtle">
+                <h4 class="text-text-bright text-xs">
+                  {componentType}
+                </h4>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="w-full text-xs">
+                  <thead>
+                    <tr class="bg-bg-secondary">
+                      <th
+                        class="text-left p-1 text-text-secondary border-b border-border-subtle font-400"
+                        >Property</th
                       >
-                        <span
-                          class:underline={isEditableProperty(value) &&
-                            !(
-                              selectedProperty?.componentType ===
-                                componentType &&
-                              selectedProperty?.propertyKey === key
-                            )}
+                      <th
+                        class="text-left p-1 text-text-secondary border-b border-border-subtle font-400"
+                        >Value</th
+                      >
+                      <th
+                        class="text-left p-1 text-text-secondary border-b border-border-subtle font-400"
+                        >Type</th
+                      >
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {#each Object.entries(component) as [key, value]}
+                      <tr
+                        class="border-b border-border-subtle hover:bg-bg-secondary/50"
+                        class:cursor-pointer={isEditableProperty(value)}
+                        class:bg-accent-blue={selectedProperty?.componentType ===
+                          componentType && selectedProperty?.propertyKey === key}
+                        onclick={() => selectProperty(componentType, key, value)}
+                      >
+                        <td
+                          class="p-1 font-mono"
+                          class:text-accent-green={!(
+                            selectedProperty?.componentType === componentType &&
+                            selectedProperty?.propertyKey === key
+                          )}
+                          class:text-white={selectedProperty?.componentType ===
+                            componentType &&
+                            selectedProperty?.propertyKey === key}
                         >
-                          {key}
-                        </span>
-                        {#if isEditableProperty(value) && !(selectedProperty?.componentType === componentType && selectedProperty?.propertyKey === key)}
-                          <span class="text-accent-blue/60 ml-1 text-[10px]"
-                            >●</span
-                          >
-                        {/if}
-                      </td>
-                      <td class="p-1 font-mono">
-                        {#if isEntityReference(value, key, appState.ecs)}
                           <span
-                            class="cursor-pointer hover:underline"
-                            class:text-accent-blue={!(
-                              selectedProperty?.componentType ===
-                                componentType &&
-                              selectedProperty?.propertyKey === key
-                            )}
-                            class:text-white={selectedProperty?.componentType ===
-                              componentType &&
-                              selectedProperty?.propertyKey === key}
-                          >
-                            Entity {value}
-                          </span>
-                        {:else if Array.isArray(value)}
-                          <div
-                            class:text-text-muted={!(
-                              selectedProperty?.componentType ===
-                                componentType &&
-                              selectedProperty?.propertyKey === key
-                            )}
-                            class:text-white={selectedProperty?.componentType ===
-                              componentType &&
-                              selectedProperty?.propertyKey === key}
-                          >
-                            {#if value.length === 0}
-                              <span
-                                class:text-text-secondary={!(
-                                  selectedProperty?.componentType ===
-                                    componentType &&
-                                  selectedProperty?.propertyKey === key
-                                )}
-                                class:text-white={selectedProperty?.componentType ===
+                            class:underline={isEditableProperty(value) &&
+                              !(
+                                selectedProperty?.componentType ===
                                   componentType &&
-                                  selectedProperty?.propertyKey === key}
-                                >[]</span
-                              >
-                            {:else}
-                              <details class="cursor-pointer">
-                                <summary
-                                  class:text-accent-yellow={!(
+                                selectedProperty?.propertyKey === key
+                              )}
+                          >
+                            {key}
+                          </span>
+                          {#if isEditableProperty(value) && !(selectedProperty?.componentType === componentType && selectedProperty?.propertyKey === key)}
+                            <span class="text-accent-blue/60 ml-1 text-[10px]"
+                              >●</span
+                            >
+                          {/if}
+                        </td>
+                        <td class="p-1 font-mono">
+                          {#if isEntityReference(value, key, appState.ecs)}
+                            <span
+                              class="cursor-pointer hover:underline"
+                              class:text-accent-blue={!(
+                                selectedProperty?.componentType ===
+                                  componentType &&
+                                selectedProperty?.propertyKey === key
+                              )}
+                              class:text-white={selectedProperty?.componentType ===
+                                componentType &&
+                                selectedProperty?.propertyKey === key}
+                            >
+                              Entity {value}
+                            </span>
+                          {:else if Array.isArray(value)}
+                            <div
+                              class:text-text-muted={!(
+                                selectedProperty?.componentType ===
+                                  componentType &&
+                                selectedProperty?.propertyKey === key
+                              )}
+                              class:text-white={selectedProperty?.componentType ===
+                                componentType &&
+                                selectedProperty?.propertyKey === key}
+                            >
+                              {#if value.length === 0}
+                                <span
+                                  class:text-text-secondary={!(
                                     selectedProperty?.componentType ===
                                       componentType &&
                                     selectedProperty?.propertyKey === key
@@ -355,18 +359,118 @@
                                   class:text-white={selectedProperty?.componentType ===
                                     componentType &&
                                     selectedProperty?.propertyKey === key}
-                                  class:hover:text-accent-orange={!(
-                                    selectedProperty?.componentType ===
+                                  >[]</span
+                                >
+                              {:else}
+                                <details class="cursor-pointer">
+                                  <summary
+                                    class:text-accent-yellow={!(
+                                      selectedProperty?.componentType ===
+                                        componentType &&
+                                      selectedProperty?.propertyKey === key
+                                    )}
+                                    class:text-white={selectedProperty?.componentType ===
                                       componentType &&
-                                    selectedProperty?.propertyKey === key
-                                  )}>[{value.length} items]</summary
-                                >
-                                <div
-                                  class="mt-1 pl-2 border-l border-border-muted"
-                                >
-                                  {#each value as item, index}
-                                    <div
-                                      class="py-0.5"
+                                      selectedProperty?.propertyKey === key}
+                                    class:hover:text-accent-orange={!(
+                                      selectedProperty?.componentType ===
+                                        componentType &&
+                                      selectedProperty?.propertyKey === key
+                                    )}>[{value.length} items]</summary
+                                  >
+                                  <div
+                                    class="mt-1 pl-2 border-l border-border-muted"
+                                  >
+                                    {#each value as item, index}
+                                      <div
+                                        class="py-0.5"
+                                        class:text-text-primary={!(
+                                          selectedProperty?.componentType ===
+                                            componentType &&
+                                          selectedProperty?.propertyKey === key
+                                        )}
+                                        class:text-white={selectedProperty?.componentType ===
+                                          componentType &&
+                                          selectedProperty?.propertyKey === key}
+                                      >
+                                        <span
+                                          class:text-text-muted={!(
+                                            selectedProperty?.componentType ===
+                                              componentType &&
+                                            selectedProperty?.propertyKey === key
+                                          )}
+                                          class:text-white={selectedProperty?.componentType ===
+                                            componentType &&
+                                            selectedProperty?.propertyKey === key}
+                                          >{index}:</span
+                                        >
+                                        {#if isEntityReference(item, key, appState.ecs)}
+                                          <span
+                                            class:text-accent-blue={!(
+                                              selectedProperty?.componentType ===
+                                                componentType &&
+                                              selectedProperty?.propertyKey ===
+                                                key
+                                            )}
+                                            class:text-white={selectedProperty?.componentType ===
+                                              componentType &&
+                                              selectedProperty?.propertyKey ===
+                                              key}>Entity {item}</span
+                                          >
+                                        {:else}
+                                          <span
+                                            class:text-text-primary={!(
+                                              selectedProperty?.componentType ===
+                                                componentType &&
+                                              selectedProperty?.propertyKey ===
+                                                key
+                                            )}
+                                            class:text-white={selectedProperty?.componentType ===
+                                              componentType &&
+                                              selectedProperty?.propertyKey ===
+                                              key}>{formatValue(item)}</span
+                                          >
+                                        {/if}
+                                      </div>
+                                    {/each}
+                                  </div>
+                                </details>
+                              {/if}
+                            </div>
+                          {:else if typeof value === "object" && value !== null}
+                            <details class="cursor-pointer">
+                              <summary
+                                class:text-accent-yellow={!(
+                                  selectedProperty?.componentType ===
+                                    componentType &&
+                                  selectedProperty?.propertyKey === key
+                                )}
+                                class:text-white={selectedProperty?.componentType ===
+                                  componentType &&
+                                  selectedProperty?.propertyKey === key}
+                                class:hover:text-accent-orange={!(
+                                  selectedProperty?.componentType ===
+                                    componentType &&
+                                  selectedProperty?.propertyKey === key
+                                )}>{Object.keys(value).length} properties</summary
+                              >
+                              <div class="mt-1 pl-2 border-l border-border-muted">
+                                {#each Object.entries(value) as [subKey, subValue]}
+                                  <div class="py-0.5">
+                                    <span
+                                      class="font-mono"
+                                      class:text-accent-green={!(
+                                        selectedProperty?.componentType ===
+                                          componentType &&
+                                        selectedProperty?.propertyKey === key
+                                      )}
+                                      class:text-white={selectedProperty?.componentType ===
+                                        componentType &&
+                                        selectedProperty?.propertyKey === key}
+                                      >{subKey}:</span
+                                    >
+                                    <span
+                                      class="ml-1"
                                       class:text-text-primary={!(
                                         selectedProperty?.componentType ===
                                           componentType &&
@@ -375,55 +479,15 @@
                                       class:text-white={selectedProperty?.componentType ===
                                         componentType &&
                                         selectedProperty?.propertyKey === key}
+                                      >{formatValue(subValue)}</span
                                     >
-                                      <span
-                                        class:text-text-muted={!(
-                                          selectedProperty?.componentType ===
-                                            componentType &&
-                                          selectedProperty?.propertyKey === key
-                                        )}
-                                        class:text-white={selectedProperty?.componentType ===
-                                          componentType &&
-                                          selectedProperty?.propertyKey === key}
-                                        >{index}:</span
-                                      >
-                                      {#if isEntityReference(item, key, appState.ecs)}
-                                        <span
-                                          class:text-accent-blue={!(
-                                            selectedProperty?.componentType ===
-                                              componentType &&
-                                            selectedProperty?.propertyKey ===
-                                              key
-                                          )}
-                                          class:text-white={selectedProperty?.componentType ===
-                                            componentType &&
-                                            selectedProperty?.propertyKey ===
-                                              key}>Entity {item}</span
-                                        >
-                                      {:else}
-                                        <span
-                                          class:text-text-primary={!(
-                                            selectedProperty?.componentType ===
-                                              componentType &&
-                                            selectedProperty?.propertyKey ===
-                                              key
-                                          )}
-                                          class:text-white={selectedProperty?.componentType ===
-                                            componentType &&
-                                            selectedProperty?.propertyKey ===
-                                              key}>{formatValue(item)}</span
-                                        >
-                                      {/if}
-                                    </div>
-                                  {/each}
-                                </div>
-                              </details>
-                            {/if}
-                          </div>
-                        {:else if typeof value === "object" && value !== null}
-                          <details class="cursor-pointer">
-                            <summary
-                              class:text-accent-yellow={!(
+                                  </div>
+                                {/each}
+                              </div>
+                            </details>
+                          {:else}
+                            <span
+                              class:text-text-primary={!(
                                 selectedProperty?.componentType ===
                                   componentType &&
                                 selectedProperty?.propertyKey === key
@@ -431,76 +495,58 @@
                               class:text-white={selectedProperty?.componentType ===
                                 componentType &&
                                 selectedProperty?.propertyKey === key}
-                              class:hover:text-accent-orange={!(
-                                selectedProperty?.componentType ===
-                                  componentType &&
-                                selectedProperty?.propertyKey === key
-                              )}>{Object.keys(value).length} properties</summary
+                              >{formatValue(value)}</span
                             >
-                            <div class="mt-1 pl-2 border-l border-border-muted">
-                              {#each Object.entries(value) as [subKey, subValue]}
-                                <div class="py-0.5">
-                                  <span
-                                    class="font-mono"
-                                    class:text-accent-green={!(
-                                      selectedProperty?.componentType ===
-                                        componentType &&
-                                      selectedProperty?.propertyKey === key
-                                    )}
-                                    class:text-white={selectedProperty?.componentType ===
-                                      componentType &&
-                                      selectedProperty?.propertyKey === key}
-                                    >{subKey}:</span
-                                  >
-                                  <span
-                                    class="ml-1"
-                                    class:text-text-primary={!(
-                                      selectedProperty?.componentType ===
-                                        componentType &&
-                                      selectedProperty?.propertyKey === key
-                                    )}
-                                    class:text-white={selectedProperty?.componentType ===
-                                      componentType &&
-                                      selectedProperty?.propertyKey === key}
-                                    >{formatValue(subValue)}</span
-                                  >
-                                </div>
-                              {/each}
-                            </div>
-                          </details>
-                        {:else}
-                          <span
-                            class:text-text-primary={!(
-                              selectedProperty?.componentType ===
-                                componentType &&
-                              selectedProperty?.propertyKey === key
-                            )}
-                            class:text-white={selectedProperty?.componentType ===
-                              componentType &&
-                              selectedProperty?.propertyKey === key}
-                            >{formatValue(value)}</span
-                          >
-                        {/if}
-                      </td>
-                      <td class="p-1" 
-                          class:text-text-muted={!(selectedProperty?.componentType === componentType && selectedProperty?.propertyKey === key)}
-                          class:text-white={selectedProperty?.componentType === componentType && selectedProperty?.propertyKey === key}>
-                        {#if Array.isArray(value)}
-                          Array[{value.length}]
-                        {:else if typeof value === "object" && value !== null}
-                          Object
-                        {:else}
-                          {typeof value}
-                        {/if}
-                      </td>
-                    </tr>
-                  {/each}
-                </tbody>
-              </table>
+                          {/if}
+                        </td>
+                        <td class="p-1" 
+                            class:text-text-muted={!(selectedProperty?.componentType === componentType && selectedProperty?.propertyKey === key)}
+                            class:text-white={selectedProperty?.componentType === componentType && selectedProperty?.propertyKey === key}>
+                          {#if Array.isArray(value)}
+                            Array[{value.length}]
+                          {:else if typeof value === "object" && value !== null}
+                            Object
+                          {:else}
+                            {typeof value}
+                          {/if}
+                        </td>
+                      </tr>
+                    {/each}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        {/each}
+          {/each}
+        {/if}
       {/if}
+    </div>
+
+    <!-- Vertical Resize Handle -->
+    {#if selectedProperty && !$panelStore.propertiesPanel.isCollapsed}
+      <button
+        type="button"
+        aria-label="Resize editor"
+        class="h-3 bg-border-default hover:bg-accent-blue cursor-row-resize transition-colors duration-150 ease-in-out flex-shrink-0 focus:outline-none relative border-y border-border-subtle"
+        class:bg-accent-blue={isVerticalResizing}
+        class:h-4={isVerticalResizing}
+        onmousedown={(e) => verticalResizeHandler?.startResize(e, panelHeight)}
+        title="Drag to resize editor"
+      >
+        <div class="absolute inset-0 flex items-center justify-center">
+          <div class="w-12 h-1 bg-border-subtle rounded-full"></div>
+        </div>
+      </button>
+    {/if}
+
+    <!-- Bottom Section: Property Editor -->
+    {#if selectedProperty && !$panelStore.propertiesPanel.isCollapsed}
+      <div class="flex-1 overflow-y-auto p-2">
+        <PropertyEditor
+          config={selectedProperty}
+          onUpdate={updateProperty}
+          onCancel={cancelPropertyEdit}
+        />
+      </div>
     {/if}
   </div>
 </div>
