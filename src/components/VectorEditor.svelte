@@ -20,19 +20,20 @@
 
   // Convert to array and ensure we have the right number of components
   let vectorArray = $state([...value]);
-  let componentCount = vectorArray.length;
+  let componentCount = $derived(vectorArray.length);
   let originalType = $state(value instanceof Float32Array ? 'Float32Array' : 'Array');
 
   // Update vectorArray when the value prop changes (e.g., when switching properties)
   $effect(() => {
     // Only update if the values are actually different
     const newArray = [...value];
-    const hasChanged = newArray.length !== vectorArray.length || 
-                      newArray.some((v, i) => v !== vectorArray[i]);
+    const currentArray = vectorArray;
+    const hasChanged = newArray.length !== currentArray.length || 
+                      newArray.some((v, i) => v !== currentArray[i]);
     
     if (hasChanged) {
       vectorArray = newArray;
-      componentCount = vectorArray.length;
+      componentCount = newArray.length;
       originalType = value instanceof Float32Array ? 'Float32Array' : 'Array';
     }
   });
@@ -50,7 +51,7 @@
   }
 
   function resetToDefault() {
-    vectorArray = new Array(componentCount).fill(resetValue);
+    vectorArray = Array.from({ length: componentCount }, () => resetValue);
     // Preserve the original type (Float32Array or Array)
     const updatedValue = originalType === 'Float32Array' 
       ? new Float32Array(vectorArray)

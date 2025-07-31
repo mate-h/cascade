@@ -45,8 +45,6 @@
               mouseY,
               isMouseDown && !wasMouseDown, // mouse down
               !isMouseDown && wasMouseDown, // mouse up
-              activeCamera.viewMatrix,
-              activeCamera.projectionMatrix
             );
           }
         }

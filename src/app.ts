@@ -11,10 +11,7 @@ import {
   orbitControlsSystem,
   cleanupOrbitControls,
   cleanup3DSystem,
-  raycastSystem,
   renderGizmo,
-  handleGizmoInteraction,
-  setGizmoTarget,
   type ECS,
 } from "./ecs";
 import { selectedEntityId } from "./stores/selection";

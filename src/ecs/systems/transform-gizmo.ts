@@ -4,7 +4,6 @@ import { getComponent } from "../types";
 import type {
   Transform3DComponent,
   TransformGizmoComponent,
-  MeshComponent,
   CameraComponent,
   ActiveCamera,
 } from "../components";
@@ -470,8 +469,6 @@ export const handleGizmoInteraction = (
   mouseY: number,
   isMouseDown: boolean,
   isMouseUp: boolean,
-  viewMatrix: Float32Array,
-  projectionMatrix: Float32Array,
 ): void => {
   if (!CONFIG.ENABLE_TRANSFORM_GIZMO) {
     return;
