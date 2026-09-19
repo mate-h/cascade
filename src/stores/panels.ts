@@ -28,8 +28,8 @@ export interface PanelSizes {
 // Default panel sizes
 const DEFAULT_PANEL_SIZES: PanelSizes = {
   ecsPanel: {
-    isCollapsed: true,
-    width: 384, // 24rem in pixels (w-96)
+    isCollapsed: false,
+    width: 280,
   },
   propertiesPanel: {
     isCollapsed: true,

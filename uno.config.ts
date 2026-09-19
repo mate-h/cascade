@@ -79,6 +79,8 @@ export default defineConfig({
   shortcuts: {
     "ui-icon-btn":
       "inline-flex items-center justify-center size-7 rounded-md border border-border-default bg-canvas-muted text-fg-muted hover:bg-control-hover hover:text-fg-default transition-colors duration-100",
+    "ui-icon-btn-active":
+      "bg-accent-muted text-fg-accent border-border-accent",
     "ui-btn":
       "inline-flex items-center justify-center gap-1.5 h-7 px-2.5 rounded-md border border-border-default bg-canvas-muted text-fg-default hover:bg-control-hover transition-colors duration-100 disabled:opacity-50 disabled:cursor-not-allowed",
     "ui-input":

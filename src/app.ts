@@ -130,27 +130,12 @@ export const initializeApp = async (): Promise<AppState> => {
 
 
 
-  // Setup resize handling with HiDPI support
   const handleResize = () => {
-    const newDimensions = calculateCanvasDimensions(
-      window.innerWidth,
-      window.innerHeight,
-    );
-    configureCanvasForHiDPI(canvas, newDimensions);
-
-    // Reconfigure WebGPU context after canvas resize
-    const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
-    appState.gpu.context.configure({
-      device: appState.gpu.device,
-      format: canvasFormat,
-    });
-
-    // Only update camera and depth texture, don't recreate the scene
-    resize3DSystem(
-      appState.ecs,
-      appState.gpu,
-      newDimensions.canvasWidth,
-      newDimensions.canvasHeight,
+    const parent = canvas.parentElement;
+    resizeApp(
+      appState,
+      parent?.clientWidth || window.innerWidth,
+      parent?.clientHeight || window.innerHeight,
     );
   };
 
@@ -161,6 +146,31 @@ export const initializeApp = async (): Promise<AppState> => {
   gameLoop(appState);
 
   return appState;
+};
+
+export const resizeApp = (
+  appState: AppState,
+  displayWidth: number,
+  displayHeight: number,
+): void => {
+  if (displayWidth <= 0 || displayHeight <= 0) return;
+
+  const canvas = appState.gpu.canvas;
+  const newDimensions = calculateCanvasDimensions(displayWidth, displayHeight);
+  configureCanvasForHiDPI(canvas, newDimensions);
+
+  const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
+  appState.gpu.context.configure({
+    device: appState.gpu.device,
+    format: canvasFormat,
+  });
+
+  resize3DSystem(
+    appState.ecs,
+    appState.gpu,
+    newDimensions.canvasWidth,
+    newDimensions.canvasHeight,
+  );
 };
 
 export const stopApp = (appState: AppState): void => {

@@ -34,6 +34,11 @@ export const serializeECS = (ecs: ECS): any => {
   return serialized;
 };
 
+export const copyECSToClipboard = async (ecs: ECS): Promise<void> => {
+  const serialized = serializeECS(ecs);
+  await navigator.clipboard.writeText(JSON.stringify(serialized, null, 2));
+};
+
 // Get all components for a specific entity
 export const getEntityComponents = (
   entityId: EntityID,
