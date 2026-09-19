@@ -26,4 +26,6 @@
   <i class="i-lucide-layers size-3.5"></i>
 {:else if name === "circle-alert"}
   <i class="i-lucide-circle-alert size-3.5"></i>
+{:else if name === "chevron-down"}
+  <i class="i-lucide-chevron-down size-3.5"></i>
 {/if}

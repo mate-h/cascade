@@ -1,15 +1,18 @@
 <script lang="ts">
+  import { DropdownMenu, Separator, Toggle, Toolbar } from "bits-ui";
   import IconButton from "./ui/IconButton.svelte";
   import Icon from "./ui/Icon.svelte";
   import Kbd from "./ui/Kbd.svelte";
+  import WithTooltip from "./ui/WithTooltip.svelte";
   import type { AppState } from "../app";
   import { panelStore } from "../stores/panels";
   import {
-    cycleActiveCamera,
     getActiveCameraId,
     getCameraIds,
+    setActiveCamera,
   } from "../stores/camera";
   import { ecsUiRevision } from "../stores/ecs-ui";
+  import { getEntityLabel } from "../utils/ecs";
   import { showFloatingText } from "../stores/labels";
   import { commandPaletteOpen } from "../commands";
   import { copyECSToClipboard } from "../utils/ecs";
@@ -19,11 +22,19 @@
   let copied = $state(false);
   let copyFailed = $state(false);
 
-  const cameraIndex = $derived.by(() => {
+  const cameraIds = $derived.by(() => {
     $ecsUiRevision;
-    const activeId = getActiveCameraId(appState.ecs);
-    if (activeId === null) return null;
-    const index = getCameraIds(appState.ecs).indexOf(activeId);
+    return getCameraIds(appState.ecs);
+  });
+
+  const activeCameraId = $derived.by(() => {
+    $ecsUiRevision;
+    return getActiveCameraId(appState.ecs);
+  });
+
+  const cameraIndex = $derived.by(() => {
+    if (activeCameraId === null) return null;
+    const index = cameraIds.indexOf(activeCameraId);
     return index >= 0 ? index + 1 : null;
   });
 
@@ -50,64 +61,99 @@
   };
 </script>
 
-<header
+<Toolbar.Root
   class="flex items-center gap-2 h-10 px-2 flex-shrink-0 border-b border-border-default bg-canvas-default"
 >
   <IconButton
     name="boxes"
-    title="Toggle entity list (N)"
+    tooltip="Toggle entity list (N)"
     pressed={!$panelStore.ecsPanel.isCollapsed}
-    onclick={() => panelStore.togglePanel("ecsPanel")}
+    onPressedChange={() => panelStore.togglePanel("ecsPanel")}
   />
   <IconButton
     name="sliders-horizontal"
-    title="Toggle properties (T)"
+    tooltip="Toggle properties (T)"
     pressed={!$panelStore.propertiesPanel.isCollapsed}
-    onclick={() => panelStore.togglePanel("propertiesPanel")}
+    onPressedChange={() => panelStore.togglePanel("propertiesPanel")}
   />
 
-  <span class="w-px h-4 bg-border-default"></span>
+  <Separator.Root
+    orientation="vertical"
+    decorative
+    class="w-px h-4 bg-border-default"
+  />
 
-  <button
-    type="button"
-    class="ui-btn"
-    title="Cycle camera (1, 2)"
-    onclick={() => cycleActiveCamera(appState.ecs)}
-  >
-    <Icon name="camera" />
-    <span>{cameraIndex ?? "—"}</span>
-    <Kbd>1</Kbd>
-    <Kbd>2</Kbd>
-  </button>
+  <DropdownMenu.Root>
+    <WithTooltip text="Select camera (1, 2)">
+      {#snippet children({ props })}
+        <DropdownMenu.Trigger {...props} class="ui-btn">
+          <Icon name="camera" />
+          <span>{cameraIndex ?? "—"}</span>
+          <Icon name="chevron-down" />
+          <Kbd>1</Kbd>
+          <Kbd>2</Kbd>
+        </DropdownMenu.Trigger>
+      {/snippet}
+    </WithTooltip>
+    <DropdownMenu.Portal>
+      <DropdownMenu.Content class="ui-menu" sideOffset={6} align="start">
+        {#if cameraIds.length === 0}
+          <div class="px-2 py-1.5 text-fg-muted">No cameras</div>
+        {:else}
+          <DropdownMenu.RadioGroup
+            value={activeCameraId === null ? "" : String(activeCameraId)}
+            onValueChange={(id) => setActiveCamera(appState.ecs, Number(id))}
+          >
+            {#each cameraIds as cameraId (cameraId)}
+              <DropdownMenu.RadioItem value={String(cameraId)} class="ui-menu-item">
+                {#snippet children({ checked })}
+                  <span class={checked ? "text-fg-accent" : "text-fg-muted"}>
+                    <Icon name={checked ? "check" : "camera"} />
+                  </span>
+                  <span>{getEntityLabel(appState.ecs, cameraId)}</span>
+                {/snippet}
+              </DropdownMenu.RadioItem>
+            {/each}
+          </DropdownMenu.RadioGroup>
+        {/if}
+      </DropdownMenu.Content>
+    </DropdownMenu.Portal>
+  </DropdownMenu.Root>
 
-  <button
-    type="button"
-    class={["ui-btn", $showFloatingText && "ui-icon-btn-active"]}
-    title="Toggle labels (L)"
-    onclick={() => showFloatingText.toggle()}
-  >
-    <Icon name="tag" />
-    <span>{$showFloatingText ? "On" : "Off"}</span>
-    <Kbd>L</Kbd>
-  </button>
+  <WithTooltip text="Toggle labels (L)">
+    {#snippet children({ props })}
+      <Toggle.Root
+        {...props}
+        pressed={$showFloatingText}
+        onPressedChange={() => showFloatingText.toggle()}
+        class="ui-btn"
+      >
+        <Icon name="tag" />
+        <span>{$showFloatingText ? "On" : "Off"}</span>
+        <Kbd>L</Kbd>
+      </Toggle.Root>
+    {/snippet}
+  </WithTooltip>
 
-  <button
-    type="button"
-    class="ui-btn"
-    title="Copy ECS as JSON"
-    onclick={copyJSON}
-  >
-    <Icon name={copied ? "check" : "copy"} />
-    <span>{copyFailed ? "Failed" : copied ? "Copied" : "JSON"}</span>
-  </button>
+  <WithTooltip text="Copy ECS as JSON">
+    {#snippet children({ props })}
+      <Toolbar.Button {...props} class="ui-btn" onclick={copyJSON}>
+        <Icon name={copied ? "check" : "copy"} />
+        <span>{copyFailed ? "Failed" : copied ? "Copied" : "JSON"}</span>
+      </Toolbar.Button>
+    {/snippet}
+  </WithTooltip>
 
-  <button
-    type="button"
-    class="ui-btn ml-auto"
-    title="Command palette ({paletteShortcut})"
-    onclick={() => commandPaletteOpen.set(true)}
-  >
-    <Icon name="search" />
-    <Kbd>{paletteShortcut}</Kbd>
-  </button>
-</header>
+  <WithTooltip text="Command palette ({paletteShortcut})">
+    {#snippet children({ props })}
+      <Toolbar.Button
+        {...props}
+        class="ui-btn ml-auto"
+        onclick={() => commandPaletteOpen.set(true)}
+      >
+        <Icon name="search" />
+        <Kbd>{paletteShortcut}</Kbd>
+      </Toolbar.Button>
+    {/snippet}
+  </WithTooltip>
+</Toolbar.Root>

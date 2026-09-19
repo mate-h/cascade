@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { Checkbox } from "bits-ui";
+  import Icon from "./ui/Icon.svelte";
+
   let {
     value,
     onUpdate,
@@ -6,23 +9,22 @@
     value: boolean;
     onUpdate: (newValue: boolean) => void;
   } = $props();
-
-  let currentValue = $derived(value);
-
-  const handleToggle = () => {
-    onUpdate(currentValue);
-  };
 </script>
 
 <label class="flex items-center gap-2 cursor-pointer">
   <span class="text-fg-muted min-w-12">Value</span>
-  <input
-    type="checkbox"
-    bind:checked={currentValue}
-    onchange={handleToggle}
-    class="size-3.5 rounded-sm border border-border-default bg-canvas-inset"
-  />
-  <span class={currentValue ? "text-fg-success" : "text-fg-muted"}>
-    {currentValue ? "true" : "false"}
+  <Checkbox.Root
+    checked={value}
+    onCheckedChange={onUpdate}
+    class="ui-checkbox"
+  >
+    {#snippet children({ checked })}
+      {#if checked}
+        <Icon name="check" />
+      {/if}
+    {/snippet}
+  </Checkbox.Root>
+  <span class={value ? "text-fg-success" : "text-fg-muted"}>
+    {value ? "true" : "false"}
   </span>
 </label>

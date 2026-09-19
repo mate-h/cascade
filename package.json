@@ -8,6 +8,9 @@
     "dev": "vite",
     "preview": "vite preview"
   },
+  "dependencies": {
+    "bits-ui": "^2.19.2"
+  },
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.134",
     "@sveltejs/vite-plugin-svelte": "^7.3.0",

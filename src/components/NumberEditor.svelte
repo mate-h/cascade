@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { Slider } from "bits-ui";
+
   let {
     value,
     label = "Value",
@@ -19,18 +21,12 @@
     showSlider?: boolean;
   } = $props();
 
-  let currentValue = $derived(value);
   const isInteger = $derived(step >= 1 || Number.isInteger(step));
-  const inputId = `number-input-${Math.random().toString(36).slice(2, 9)}`;
+  const inputId = $props.id();
 
   const commit = (next: number) => {
     if (Number.isNaN(next)) return;
-    currentValue = Math.max(min, Math.min(max, next));
-    onUpdate(currentValue);
-  };
-
-  const handleSliderChange = (event: Event) => {
-    commit(parseFloat((event.target as HTMLInputElement).value));
+    onUpdate(Math.max(min, Math.min(max, next)));
   };
 
   const handleInputChange = (event: Event) => {
@@ -47,7 +43,7 @@
     <input
       id={inputId}
       type="number"
-      bind:value={currentValue}
+      value={value}
       {min}
       {max}
       {step}
@@ -61,18 +57,28 @@
       {#if showRange}
         <div class="flex justify-between text-fg-muted">
           <span>{min}</span>
-          <span class="text-fg-default">{formatValue(currentValue)}</span>
+          <span class="text-fg-default">{formatValue(value)}</span>
           <span>{max}</span>
         </div>
       {/if}
-      <input
-        type="range"
-        bind:value={currentValue}
+      <Slider.Root
+        type="single"
+        {value}
         {min}
         {max}
         {step}
-        oninput={handleSliderChange}
-      />
+        onValueChange={commit}
+        class="ui-slider"
+      >
+        {#snippet children({ thumbItems })}
+          <span class="ui-slider-track">
+            <Slider.Range class="ui-slider-range" />
+          </span>
+          {#each thumbItems as thumb (thumb.index)}
+            <Slider.Thumb index={thumb.index} class="ui-slider-thumb" />
+          {/each}
+        {/snippet}
+      </Slider.Root>
     </div>
   {/if}
 </div>

@@ -9,4 +9,5 @@ export type IconName =
   | "search"
   | "rotate-ccw"
   | "layers"
-  | "circle-alert";
+  | "circle-alert"
+  | "chevron-down";

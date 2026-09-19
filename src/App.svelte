@@ -12,6 +12,7 @@
   import { showFloatingText } from "./stores/labels";
   import { commandPaletteOpen } from "./commands";
   import { panelStore } from "./stores/panels";
+  import { Tooltip } from "bits-ui";
 
   let appState = $state<AppState | null>(null);
   let error = $state<string | null>(null);
@@ -37,7 +38,8 @@
     return (
       target.tagName === "INPUT" ||
       target.tagName === "TEXTAREA" ||
-      target.isContentEditable
+      target.isContentEditable ||
+      target.getAttribute("role") === "combobox"
     );
   };
 
@@ -82,6 +84,7 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
+<Tooltip.Provider delayDuration={400}>
 <main class="flex flex-col w-screen h-screen bg-canvas-default font-mono text-[13px] leading-[1.4] text-fg-default">
   {#if error}
     <div class="flex justify-center items-center h-full w-full">
@@ -111,3 +114,4 @@
     </div>
   {/if}
 </main>
+</Tooltip.Provider>

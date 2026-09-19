@@ -1,9 +1,11 @@
 <script lang="ts">
+  import { Collapsible } from "bits-ui";
   import { isEditableProperty } from "../utils/property-config";
   import type { PropertyConfig } from "./PropertyEditor.svelte";
   import PropertyEditor from "./PropertyEditor.svelte";
   import type { AppState } from "../app";
   import { CONFIG } from "../config";
+  import Icon from "./ui/Icon.svelte";
 
   let {
     selectedProperty,
@@ -20,6 +22,8 @@
     componentType: string;
     component: Record<string, unknown>;
   } = $props();
+
+  let open = $state(true);
 
   const isPropertySelected = (key: string) =>
     selectedProperty?.componentType === componentType &&
@@ -60,12 +64,21 @@
   };
 </script>
 
-<div class="mb-2 rounded-md border border-border-muted overflow-hidden">
-  <div class="px-2 py-2 bg-canvas-muted border-b border-border-default text-fg-accent">
-    {componentType}
-  </div>
+<Collapsible.Root bind:open class="mb-2 rounded-md border border-border-muted overflow-hidden">
+  <Collapsible.Trigger
+    class={[
+      "flex w-full items-center justify-between gap-2 px-2 py-2 bg-canvas-muted text-fg-accent text-left",
+      open && "border-b border-border-default",
+    ]}
+  >
+    <span>{componentType}</span>
+    <span class={["text-fg-muted transition-transform duration-100", open && "rotate-180"]}>
+      <Icon name="chevron-down" />
+    </span>
+  </Collapsible.Trigger>
 
-  <div>
+  <Collapsible.Content>
+    <div>
     {#each Object.entries(component) as [key, value] (key)}
       {@const selected = isPropertySelected(key)}
       {@const editable = isEditableProperty(value, componentType, key)}
@@ -79,8 +92,8 @@
           onclick={() => onSelectProperty(componentType, key, value)}
           disabled={!editable}
         >
-          <span class="text-fg-muted">{key}</span>
-          <span class="text-fg-muted min-w-0 text-right">
+          <span class={editable ? "text-fg-default" : "text-fg-muted"}>{key}</span>
+          <span class={["min-w-0 text-right", selected ? "text-fg-default" : "text-fg-muted"]}>
             {#if isEntityReference(value, key)}
               <span class="entity-ref">Entity {value}</span>
             {:else if Array.isArray(value) && value.length > 4}
@@ -100,5 +113,6 @@
         {/if}
       </div>
     {/each}
-  </div>
-</div>
+    </div>
+  </Collapsible.Content>
+</Collapsible.Root>
