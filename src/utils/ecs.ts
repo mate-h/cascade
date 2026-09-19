@@ -1,4 +1,5 @@
 import type { ECS, EntityID, ComponentType } from "../ecs/types";
+import { COMPONENT_TYPES, type TextLabelComponent } from "../ecs/components";
 
 // Get ECS statistics
 export const getECSStats = (
@@ -37,6 +38,14 @@ export const serializeECS = (ecs: ECS): any => {
 export const copyECSToClipboard = async (ecs: ECS): Promise<void> => {
   const serialized = serializeECS(ecs);
   await navigator.clipboard.writeText(JSON.stringify(serialized, null, 2));
+};
+
+export const getEntityLabel = (ecs: ECS, entityId: EntityID): string => {
+  const textLabel = ecs.components
+    .get(COMPONENT_TYPES.TEXT_LABEL)
+    ?.get(entityId) as TextLabelComponent | undefined;
+  const text = textLabel?.text?.trim();
+  return text || `Entity ${entityId}`;
 };
 
 // Get all components for a specific entity

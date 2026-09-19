@@ -61,7 +61,7 @@
 </script>
 
 <div class="mb-2 rounded-md border border-border-muted overflow-hidden">
-  <div class="px-2 py-1.5 border-b border-border-muted text-fg-default">
+  <div class="px-2 py-2 bg-canvas-muted border-b border-border-default text-fg-accent">
     {componentType}
   </div>
 
@@ -79,7 +79,7 @@
           onclick={() => onSelectProperty(componentType, key, value)}
           disabled={!editable}
         >
-          <span class={editable ? "text-fg-default" : "text-fg-muted"}>{key}</span>
+          <span class="text-fg-muted">{key}</span>
           <span class="text-fg-muted min-w-0 text-right">
             {#if isEntityReference(value, key)}
               <span class="entity-ref">Entity {value}</span>

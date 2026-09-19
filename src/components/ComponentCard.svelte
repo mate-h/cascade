@@ -1,37 +1,38 @@
 <script lang="ts">
-  import { COMPONENT_TYPES, addComponent } from "../ecs";
+  import { COMPONENT_TYPES } from "../ecs";
   import type { ECS } from "../ecs";
-  import { activeCameraId } from "../stores/camera";
-  import IconButton from "./ui/IconButton.svelte";
+  import { getActiveCameraId, setActiveCamera } from "../stores/camera";
+  import { ecsUiRevision } from "../stores/ecs-ui";
   import Icon from "./ui/Icon.svelte";
 
   let { componentType, entityId, ecs } = $props();
 
   const isCamera = $derived(componentType === COMPONENT_TYPES.CAMERA);
-  const isActive = $derived($activeCameraId === entityId);
+  const isActive = $derived.by(() => {
+    $ecsUiRevision;
+    return getActiveCameraId(ecs as ECS) === entityId;
+  });
 
-  const setActiveCamera = (event: MouseEvent) => {
+  const activateCamera = (event: MouseEvent) => {
     event.stopPropagation();
-    const activeMap = ecs.components.get(COMPONENT_TYPES.ACTIVE_CAMERA);
-    if (activeMap) {
-      for (const id of activeMap.keys()) activeMap.delete(id);
-    }
-    addComponent(ecs as ECS, entityId, COMPONENT_TYPES.ACTIVE_CAMERA, {});
-    activeCameraId.set(entityId);
+    setActiveCamera(ecs as ECS, entityId);
   };
 </script>
 
 <div class="flex items-center justify-between pl-2 py-0.5 text-fg-muted">
   <span>{componentType}</span>
   {#if isCamera}
-    {#if isActive}
-      <span class="text-fg-accent" title="Active camera"><Icon name="camera" /></span>
-    {:else}
-      <IconButton
-        name="camera"
-        title="Set as active camera"
-        onclick={setActiveCamera}
-      />
-    {/if}
+    <button
+      type="button"
+      class={[
+        "inline-flex items-center justify-center p-0 border-0 bg-transparent focus:outline-none",
+        isActive ? "text-fg-accent" : "text-fg-disabled hover:text-fg-default",
+      ]}
+      title={isActive ? "Active camera" : "Set as active camera"}
+      aria-pressed={isActive}
+      onclick={activateCamera}
+    >
+      <Icon name="camera" />
+    </button>
   {/if}
 </div>

@@ -4,7 +4,7 @@
 import type { AppState } from "../app";
 import { COMPONENT_TYPES } from "../ecs/components";
 import type { TextLabelComponent, Transform3DComponent, CameraComponent } from "../ecs/components";
-import { activeCameraId } from "../stores/camera";
+import { getActiveCameraId } from "../stores/camera";
 import { selectedEntityId } from "../stores/selection";
 import { vec3, vec4 } from "wgpu-matrix";
 
@@ -29,11 +29,12 @@ import { vec3, vec4 } from "wgpu-matrix";
     return labels;
   });
 
-  const activeCamera = $derived(() => {
-    if ($activeCameraId === null) return null;
+  const getActiveCamera = (): CameraComponent | null => {
+    const activeId = getActiveCameraId(appState.ecs);
+    if (activeId === null) return null;
     const cameraComponents = appState.ecs.components.get(COMPONENT_TYPES.CAMERA) as Map<number, CameraComponent> | undefined;
-    return cameraComponents?.get($activeCameraId) || null;
-  });
+    return cameraComponents?.get(activeId) || null;
+  };
 
   // Helper: deep state snapshot for all label positions, text, selection
   function getLabelStateSnapshot(
@@ -61,8 +62,8 @@ import { vec3, vec4 } from "wgpu-matrix";
   }
 
   function updateTextPositions() {
-    if (!textContainer || !activeCamera) return;
-    const camera = activeCamera();
+    if (!textContainer) return;
+    const camera = getActiveCamera();
     if (!camera) {
       animationFrameId = requestAnimationFrame(updateTextPositions);
       return;

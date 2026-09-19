@@ -1,13 +1,16 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import EntityCard from "./EntityCard.svelte";
-  import { getECSStats } from "../utils/ecs";
+  import { getECSStats, getEntityLabel } from "../utils/ecs";
   import { selectedEntityId, selectEntity } from "../stores/selection";
   import { panelStore, createResizeHandler } from "../stores/panels";
+  import { ecsUiRevision } from "../stores/ecs-ui";
+  import PanelSearch from "./ui/PanelSearch.svelte";
 
   let { appState } = $props();
 
   let highlightedEntities = $state(new Set<number>());
+  let search = $state("");
   let panelWidth = $state(0);
   let isResizing = $state(false);
   let resizeHandler: ReturnType<typeof createResizeHandler> | null = null;
@@ -42,7 +45,15 @@
   });
 
   const stats = $derived(getECSStats(appState.ecs));
-  const sortedEntities = $derived([...appState.ecs.entities].sort((a, b) => a - b));
+  const visibleEntities = $derived.by(() => {
+    $ecsUiRevision;
+    const query = search.trim().toLowerCase();
+    const ids = [...appState.ecs.entities].sort((a, b) => a - b);
+    if (!query) return ids;
+    return ids.filter((id) =>
+      getEntityLabel(appState.ecs, id).toLowerCase().includes(query),
+    );
+  });
   const isCollapsed = $derived($panelStore.ecsPanel.isCollapsed);
 
   const handleEntitySelect = (entityId: number) => {
@@ -105,15 +116,17 @@
   >
     <div class="flex flex-col h-full flex-1 min-w-0">
       <header class="flex items-center gap-2 h-10 px-2 border-b border-border-default">
-        <span class="text-fg-default">Entities</span>
-        <span class="ml-auto text-fg-muted">{stats.entities}</span>
+        <PanelSearch placeholder="Entities" bind:value={search} />
+        <span class="text-fg-muted">{search.trim() ? visibleEntities.length : stats.entities}</span>
       </header>
 
       <div class="flex-1 overflow-y-auto p-1">
-        {#if sortedEntities.length === 0}
-          <div class="text-fg-muted px-2 py-6 text-center">No entities</div>
+        {#if visibleEntities.length === 0}
+          <div class="text-fg-muted px-2 py-6 text-center">
+            {search.trim() ? "No matching entities" : "No entities"}
+          </div>
         {:else}
-          {#each sortedEntities as entityId (entityId)}
+          {#each visibleEntities as entityId (entityId)}
             <EntityCard
               {entityId}
               ecs={appState.ecs}

@@ -14,13 +14,12 @@ import {
   type MaterialComponent,
   type OrbitControlsComponent,
   type VisibilityComponent,
-  type ActiveCamera,
   type TextLabelComponent,
   type SelectableComponent,
   type TransformGizmoComponent,
 } from "./ecs/components";
 import { createCube, createGrid, createVertexBuffer } from "./utils/geometry";
-import { activeCameraId } from "./stores/camera";
+import { setActiveCamera } from "./stores/camera";
 import { vec2, vec3 } from "wgpu-matrix";
 
 export const createErosionScene = (width: number, height: number): ECS => {
@@ -149,10 +148,7 @@ export const create3DScene = (width: number, height: number): ECS => {
     },
   );
 
-  // Mark as active camera
-  addComponent<ActiveCamera>(ecs, camera, COMPONENT_TYPES.ACTIVE_CAMERA, {});
-
-  activeCameraId.set(camera);
+  setActiveCamera(ecs, camera);
 
   // Add text label to main camera
   addComponent<TextLabelComponent>(ecs, camera, COMPONENT_TYPES.TEXT_LABEL, {

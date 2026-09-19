@@ -5,10 +5,11 @@
   import type { AppState } from "../app";
   import { panelStore } from "../stores/panels";
   import {
-    activeCameraId,
     cycleActiveCamera,
+    getActiveCameraId,
     getCameraIds,
   } from "../stores/camera";
+  import { ecsUiRevision } from "../stores/ecs-ui";
   import { showFloatingText } from "../stores/labels";
   import { commandPaletteOpen } from "../commands";
   import { copyECSToClipboard } from "../utils/ecs";
@@ -19,8 +20,10 @@
   let copyFailed = $state(false);
 
   const cameraIndex = $derived.by(() => {
-    if ($activeCameraId === null) return null;
-    const index = getCameraIds(appState.ecs).indexOf($activeCameraId);
+    $ecsUiRevision;
+    const activeId = getActiveCameraId(appState.ecs);
+    if (activeId === null) return null;
+    const index = getCameraIds(appState.ecs).indexOf(activeId);
     return index >= 0 ? index + 1 : null;
   });
 
@@ -58,7 +61,7 @@
   />
   <IconButton
     name="sliders-horizontal"
-    title="Toggle inspector (T)"
+    title="Toggle properties (T)"
     pressed={!$panelStore.propertiesPanel.isCollapsed}
     onclick={() => panelStore.togglePanel("propertiesPanel")}
   />

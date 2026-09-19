@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { getEntityComponents } from "../utils/ecs";
+  import { getEntityComponents, getEntityLabel } from "../utils/ecs";
   import { COMPONENT_TYPES } from "../ecs";
   import type { ECS } from "../ecs";
-  import { activeCameraId, setActiveCamera } from "../stores/camera";
+  import { getActiveCameraId, setActiveCamera } from "../stores/camera";
+  import { ecsUiRevision } from "../stores/ecs-ui";
   import Icon from "./ui/Icon.svelte";
-  import IconButton from "./ui/IconButton.svelte";
 
   let {
     entityId,
@@ -14,9 +14,19 @@
     onSelect,
   } = $props();
 
-  const components = $derived(getEntityComponents(entityId, ecs));
+  const components = $derived.by(() => {
+    $ecsUiRevision;
+    return getEntityComponents(entityId, ecs);
+  });
+  const label = $derived.by(() => {
+    $ecsUiRevision;
+    return getEntityLabel(ecs, entityId);
+  });
   const isCamera = $derived(components.has(COMPONENT_TYPES.CAMERA));
-  const isActiveCamera = $derived($activeCameraId === entityId);
+  const isActiveCamera = $derived.by(() => {
+    $ecsUiRevision;
+    return getActiveCameraId(ecs as ECS) === entityId;
+  });
 
   const handleClick = () => {
     onSelect?.();
@@ -25,6 +35,7 @@
   const activateCamera = (event: MouseEvent) => {
     event.stopPropagation();
     setActiveCamera(ecs as ECS, entityId);
+    if (!isSelected) onSelect?.();
   };
 </script>
 
@@ -42,22 +53,24 @@
 >
   <div class="flex items-center gap-2">
     <span class={isSelected ? "text-fg-accent" : "text-fg-default"}>
-      Entity {entityId}
+      {label}
     </span>
     <span class="text-fg-muted">{components.size}</span>
     {#if isCamera}
-      {#if isActiveCamera}
-        <span class="ml-auto text-fg-accent" title="Active camera">
-          <Icon name="camera" />
-        </span>
-      {:else}
-        <IconButton
-          class="ml-auto"
-          name="camera"
-          title="Set as active camera"
-          onclick={activateCamera}
-        />
-      {/if}
+      <button
+        type="button"
+        class={[
+          "ml-auto inline-flex items-center justify-center p-0 border-0 bg-transparent focus:outline-none",
+          isActiveCamera
+            ? "text-fg-accent"
+            : "text-fg-disabled hover:text-fg-default",
+        ]}
+        title={isActiveCamera ? "Active camera" : "Set as active camera"}
+        aria-pressed={isActiveCamera}
+        onclick={activateCamera}
+      >
+        <Icon name="camera" />
+      </button>
     {/if}
   </div>
 
