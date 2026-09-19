@@ -4,12 +4,14 @@
   import CanvasPanel from "./components/CanvasPanel.svelte";
   import PropertiesPanel from "./components/PropertiesPanel.svelte";
   import FloatingText from "./components/FloatingText.svelte";
+  import StatusBar from "./components/StatusBar.svelte";
+  import CommandPalette from "./components/CommandPalette.svelte";
+  import Icon from "./components/ui/Icon.svelte";
   import { initializeApp, stopApp } from "./app";
   import type { AppState } from "./app";
   import { activeCameraId } from "./stores/camera";
   import { COMPONENT_TYPES, addComponent } from "./ecs";
   import { showFloatingText } from "./stores/labels";
-  import CommandPalette from "./components/CommandPalette.svelte";
   import { commandPaletteOpen } from "./commands";
 
   let appState = $state<AppState | null>(null);
@@ -31,11 +33,9 @@
     }
   });
 
-  // Camera switching function
-  function switchCamera(cameraEntityId: number) {
+  const switchCamera = (cameraEntityId: number) => {
     if (!appState) return;
 
-    // Remove existing active camera marker
     const activeMap = appState.ecs.components.get(COMPONENT_TYPES.ACTIVE_CAMERA);
     if (activeMap) {
       for (const id of activeMap.keys()) {
@@ -43,36 +43,28 @@
       }
     }
 
-    // Add active camera marker to the selected camera
     addComponent(appState.ecs, cameraEntityId, COMPONENT_TYPES.ACTIVE_CAMERA, {});
     activeCameraId.set(cameraEntityId);
-  }
+  };
 
-  // Keyboard event handler for camera switching
-  function handleKeydown(event: KeyboardEvent) {
-    if (!appState) return;
-
-    // Only handle if not typing in an input/textarea
-    const target = event.target as HTMLElement;
-    if (
+  const isTypingTarget = (target: EventTarget | null) => {
+    if (!(target instanceof HTMLElement)) return false;
+    return (
       target.tagName === "INPUT" ||
       target.tagName === "TEXTAREA" ||
       target.isContentEditable
-    ) {
-      return;
-    }
+    );
+  };
 
-    // Open command palette with Ctrl+K / Cmd+K
-    if (
-      event.key.toLowerCase() === "k" &&
-      (event.ctrlKey || event.metaKey)
-    ) {
+  const handleKeydown = (event: KeyboardEvent) => {
+    if (!appState || isTypingTarget(event.target)) return;
+
+    if (event.key.toLowerCase() === "k" && (event.ctrlKey || event.metaKey)) {
       event.preventDefault();
       commandPaletteOpen.set(true);
       return;
     }
 
-    // Toggle floating text labels with "L"
     if (
       event.key.toLowerCase() === "l" &&
       !event.ctrlKey &&
@@ -81,15 +73,13 @@
     ) {
       event.preventDefault();
       showFloatingText.toggle();
-      return; // Don't continue processing other shortcuts
+      return;
     }
 
-    // Get all camera entities
     const cameraComponents = appState.ecs.components.get(COMPONENT_TYPES.CAMERA);
     if (!cameraComponents) return;
 
     const cameraIds = Array.from(cameraComponents.keys());
-
     if (event.key === "1" && cameraIds.length >= 1) {
       event.preventDefault();
       switchCamera(cameraIds[0]);
@@ -97,75 +87,35 @@
       event.preventDefault();
       switchCamera(cameraIds[1]);
     }
-  }
-
-  // Add global keydown listener
-  $effect(() => {
-    if (appState) {
-      document.addEventListener("keydown", handleKeydown);
-      return () => {
-        document.removeEventListener("keydown", handleKeydown);
-      };
-    }
-  });
+  };
 </script>
 
-<main
-  class="relative w-screen h-screen bg-bg-primary font-mono text-[13px] leading-[1.4]"
->
+<svelte:window onkeydown={handleKeydown} />
+
+<main class="relative w-screen h-screen bg-canvas-default font-mono text-[13px] leading-[1.4] text-fg-default">
   {#if error}
-    <div class="flex justify-center items-center h-full w-full text-text-primary">
-      <div class="text-center">
-        <h1 class="text-2xl mb-4 text-text-bright">Initialization Failed</h1>
-        <p class="text-text-secondary">{error}</p>
+    <div class="flex justify-center items-center h-full w-full">
+      <div class="flex flex-col items-center gap-2 text-center">
+        <span class="text-fg-danger"><Icon name="circle-alert" /></span>
+        <p>Initialization failed</p>
+        <p class="text-fg-muted">{error}</p>
       </div>
     </div>
   {:else if appState}
-    <!-- Fullscreen Canvas -->
     <CanvasPanel {appState} />
-    <!-- Floating Text Labels -->
     {#if $showFloatingText}
       <FloatingText {appState} />
     {/if}
-    <!-- Command Palette -->
     <CommandPalette />
-    <!-- Collapsible Panel Overlay -->
     <ECSPanel {appState} />
-    <!-- Properties Panel -->
     <PropertiesPanel {appState} />
-    
-    <!-- Camera Indicator Overlay -->
-    <div class="fixed bottom-4 left-4 z-50 bg-bg-panel/90 backdrop-blur-sm border border-border-default rounded px-3 py-2 text-text-primary">
-      <div class="flex items-center gap-2">
-        <span class="text-accent-blue">Camera:</span>
-        <span class="font-mono">
-          {#if $activeCameraId !== null}
-            {(() => {
-              const cameraComponents = appState.ecs.components.get(COMPONENT_TYPES.CAMERA);
-              if (cameraComponents) {
-                const cameraIds = Array.from(cameraComponents.keys());
-                const index = cameraIds.indexOf($activeCameraId);
-                return index >= 0 ? index + 1 : "?";
-              }
-              return "?";
-            })()}
-          {:else}
-            ?
-          {/if}
-        </span>
-        <span class="text-text-secondary text-xs">(1, 2 to switch)</span>
-      </div>
-      <button type="button" class="flex items-center gap-2 mt-1 focus:outline-none" onclick={() => showFloatingText.toggle()} title="Toggle labels (L)">
-        <span class="text-accent-yellow">Labels:</span>
-        <span class="font-mono">{$showFloatingText ? "On" : "Off"}</span>
-        <span class="text-text-secondary text-xs">(L)</span>
-      </button>
-    </div>
+    <StatusBar {appState} />
   {:else}
-    <div class="flex justify-center items-center h-full w-full text-text-primary">
-      <div class="text-center">
-        <h1 class="text-2xl mb-4 text-text-bright">Loading...</h1>
-        <p class="text-text-secondary">Initializing WebGPU and ECS</p>
+    <div class="flex justify-center items-center h-full w-full">
+      <div class="flex flex-col items-center gap-2 text-center">
+        <span class="text-fg-muted"><Icon name="layers" /></span>
+        <p>Loading</p>
+        <p class="text-fg-muted">Initializing WebGPU and ECS</p>
       </div>
     </div>
   {/if}

@@ -2,40 +2,36 @@
   import { COMPONENT_TYPES, addComponent } from "../ecs";
   import type { ECS } from "../ecs";
   import { activeCameraId } from "../stores/camera";
+  import IconButton from "./ui/IconButton.svelte";
+  import Icon from "./ui/Icon.svelte";
 
   let { componentType, entityId, ecs } = $props();
 
-  const isCamera = componentType === COMPONENT_TYPES.CAMERA;
-
+  const isCamera = $derived(componentType === COMPONENT_TYPES.CAMERA);
   const isActive = $derived($activeCameraId === entityId);
 
-  function setActiveCamera() {
-    // Remove existing active marker
+  const setActiveCamera = (event: MouseEvent) => {
+    event.stopPropagation();
     const activeMap = ecs.components.get(COMPONENT_TYPES.ACTIVE_CAMERA);
     if (activeMap) {
       for (const id of activeMap.keys()) activeMap.delete(id);
     }
     addComponent(ecs as ECS, entityId, COMPONENT_TYPES.ACTIVE_CAMERA, {});
     activeCameraId.set(entityId);
-  }
+  };
 </script>
 
-<div class="component-card flex items-center justify-between">
-  <span class="text-text-bright font-medium">{componentType}</span>
+<div class="flex items-center justify-between pl-2 py-0.5 text-fg-muted">
+  <span>{componentType}</span>
   {#if isCamera}
-    <button
-      class="text-xs text-white bg-bg-secondary border border-border-subtle rounded px-1 py-0.5 hover:bg-accent-blue/20"
-      onclick={setActiveCamera}
-      title={isActive ? "Currently active" : "Set as active camera"}
-      disabled={isActive}
-    >
-      {#if isActive}
-        <i class="i-material-symbols:photo-camera-outline-rounded text-white size-4"></i>
-      {:else}
-        Set Active
-      {/if}
-    </button>
+    {#if isActive}
+      <span class="text-fg-accent" title="Active camera"><Icon name="camera" /></span>
+    {:else}
+      <IconButton
+        name="camera"
+        title="Set as active camera"
+        onclick={setActiveCamera}
+      />
+    {/if}
   {/if}
 </div>
-
-

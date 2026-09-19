@@ -1,4 +1,5 @@
 import "@unocss/reset/tailwind.css";
+import "virtual:uno.css";
 import "./style.css";
 import App from "./App.svelte";
 import { mount } from "svelte";

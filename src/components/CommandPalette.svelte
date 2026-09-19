@@ -1,15 +1,17 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import {
     commandList,
     commandPaletteOpen,
     executeCommand,
   } from "../commands";
+  import Kbd from "./ui/Kbd.svelte";
+  import Icon from "./ui/Icon.svelte";
 
   let search = $state("");
   let inputEl = $state<HTMLInputElement>();
+  let activeIndex = $state(0);
 
-  const filtered = $derived(() => {
+  const filtered = $derived.by(() => {
     const q = search.trim().toLowerCase();
     if (!q) return commandList;
     return commandList.filter((cmd) => {
@@ -18,81 +20,90 @@
     });
   });
 
-  onMount(() => {
-    inputEl?.focus();
-  });
-
-  // Focus input each time palette becomes visible
   $effect(() => {
     if ($commandPaletteOpen) {
-      // wait next tick to ensure element exists
       Promise.resolve().then(() => inputEl?.focus());
     }
   });
 
-  function closePalette() {
+  const closePalette = () => {
     commandPaletteOpen.set(false);
-    search = ""; // reset query
-  }
+    search = "";
+    activeIndex = 0;
+  };
 
-  function select(cmdId: string) {
+  const select = (cmdId: string) => {
     executeCommand(cmdId);
     closePalette();
-  }
+  };
 
-  function handleKey(event: KeyboardEvent) {
+  const handleKey = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
       event.preventDefault();
       closePalette();
+    } else if (event.key === "ArrowDown") {
+      event.preventDefault();
+      activeIndex = Math.min(activeIndex + 1, Math.max(filtered.length - 1, 0));
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, 0);
     } else if (event.key === "Enter") {
       event.preventDefault();
-      const list = filtered();
-      if (list.length > 0) {
-        select(list[0].id);
-      }
+      const cmd = filtered[activeIndex];
+      if (cmd) select(cmd.id);
     }
-  }
+  };
 </script>
 
 {#if $commandPaletteOpen}
   <div
-    class="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/50 backdrop-blur-sm"
+    class="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-[var(--overlay-backdrop-bgColor)]"
     onclick={closePalette}
-    tabindex="0"
-    role="button"
     onkeydown={handleKey}
+    role="presentation"
   >
     <div
-      class="bg-bg-primary/95 border border-border-default rounded shadow-lg w-80 max-h-[60vh] overflow-hidden"
-      role="button"
-      tabindex="0"
+      class="w-[480px] max-h-[60vh] overflow-hidden rounded-md border border-border-default bg-canvas-overlay shadow-float"
+      role="dialog"
+      aria-label="Command palette"
+      tabindex="-1"
       onclick={(e) => e.stopPropagation()}
       onkeydown={handleKey}
     >
-      <input
-        bind:this={inputEl}
-        bind:value={search}
-        onkeydown={handleKey}
-        class="w-full py-2 px-3 bg-transparent outline-none border-b border-border-subtle text-text-primary placeholder:text-text-muted"
-        placeholder="Type a command..."
-        autocomplete="off"
-      />
-      <ul class="max-h-[50vh] overflow-y-auto divide-y divide-border-subtle">
-        {#if filtered().length === 0}
-          <li class="p-3 text-text-muted">No commands</li>
+      <div class="flex items-center gap-2 px-3 border-b border-border-muted">
+        <span class="text-fg-muted"><Icon name="search" /></span>
+        <input
+          bind:this={inputEl}
+          bind:value={search}
+          oninput={() => {
+            activeIndex = 0;
+          }}
+          onkeydown={handleKey}
+          class="w-full h-10 bg-transparent outline-none text-fg-default placeholder:text-fg-disabled"
+          placeholder="Type a command"
+          autocomplete="off"
+        />
+      </div>
+      <ul class="max-h-[50vh] overflow-y-auto p-1">
+        {#if filtered.length === 0}
+          <li class="px-2 py-3 text-fg-muted">No commands</li>
         {:else}
-          {#each filtered() as cmd (cmd.id)}
+          {#each filtered as cmd, index (cmd.id)}
             <li>
               <button
                 type="button"
-                class="w-full flex justify-between items-center p-3 text-left hover:bg-bg-overlay focus:outline-none"
+                class={[
+                  "w-full flex justify-between items-center gap-3 px-2 py-1.5 rounded-md text-left",
+                  index === activeIndex ? "bg-accent-muted" : "hover:bg-canvas-muted",
+                ]}
                 onclick={() => select(cmd.id)}
               >
-                <span class="text-text-bright">{cmd.title}</span>
+                <span class="flex items-center gap-2 text-fg-default">
+                  <span class="text-fg-muted"><Icon name={cmd.icon} /></span>
+                  {cmd.title}
+                </span>
                 {#if cmd.shortcut}
-                  <span class="text-text-secondary text-xs border border-border-subtle rounded px-1 py-0.5">
-                    {cmd.shortcut}
-                  </span>
+                  <Kbd>{cmd.shortcut}</Kbd>
                 {/if}
               </button>
             </li>
@@ -101,4 +112,4 @@
       </ul>
     </div>
   </div>
-{/if} 
+{/if}

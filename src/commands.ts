@@ -1,10 +1,12 @@
 import { writable } from "svelte/store";
 import { showFloatingText } from "./stores/labels";
 import { panelStore } from "./stores/panels";
+import type { IconName } from "./components/ui/icons";
 
 export interface Command {
   id: string;
   title: string;
+  icon: IconName;
   /** Example: "L" or "Ctrl+K" for display only */
   shortcut?: string;
   /** Space-separated keywords to help fuzzy search */
@@ -23,13 +25,15 @@ export const commandList: Command[] = [
   {
     id: COMMAND_IDS.TOGGLE_LABELS,
     title: "Toggle Floating Labels",
+    icon: "tag",
     shortcut: "L",
-    keywords: "text labels overlay", // search helpers
+    keywords: "text labels overlay",
     action: () => showFloatingText.toggle(),
   },
   {
     id: COMMAND_IDS.TOGGLE_ECS_PANEL,
     title: "Toggle ECS Panel",
+    icon: "boxes",
     shortcut: "N",
     keywords: "entity component system panel sidebar",
     action: () => panelStore.togglePanel("ecsPanel"),
@@ -37,6 +41,7 @@ export const commandList: Command[] = [
   {
     id: COMMAND_IDS.TOGGLE_PROPERTIES_PANEL,
     title: "Toggle Properties Panel",
+    icon: "sliders-horizontal",
     shortcut: "T",
     keywords: "inspector properties sidebar",
     action: () => panelStore.togglePanel("propertiesPanel"),

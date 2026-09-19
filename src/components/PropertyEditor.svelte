@@ -1,85 +1,64 @@
 <script lang="ts">
-  import NumberEditor from './NumberEditor.svelte';
-  import StringEditor from './StringEditor.svelte';
-  import BooleanEditor from './BooleanEditor.svelte';
-  import VectorEditor from './VectorEditor.svelte';
+  import NumberEditor from "./NumberEditor.svelte";
+  import StringEditor from "./StringEditor.svelte";
+  import BooleanEditor from "./BooleanEditor.svelte";
+  import VectorEditor from "./VectorEditor.svelte";
+  import IconButton from "./ui/IconButton.svelte";
 
   export interface PropertyConfig {
     entityId: number;
     componentType: string;
     propertyKey: string;
-    value: any;
+    value: unknown;
     type: string;
-    // Number-specific config
     min?: number;
     max?: number;
     step?: number;
-    // Vector-specific config
     vectorSize?: number;
   }
 
-  let { 
-    config, 
+  let {
+    config,
     onUpdate,
-    onCancel 
+    onCancel,
   }: {
     config: PropertyConfig;
-    onUpdate: (newValue: any) => void;
+    onUpdate: (newValue: unknown) => void;
     onCancel: () => void;
   } = $props();
-
-  function handleUpdate(newValue: any) {
-    onUpdate(newValue);
-  }
 </script>
 
-<div class="bg-bg-elevated border border-border-default rounded p-3">
+<div class="rounded-md border border-border-default bg-canvas-muted p-2">
   <div class="flex items-center justify-between mb-2">
-    <h3 class="text-text-bright">
-      Editing: {config.componentType}.{config.propertyKey}
-    </h3>
-    <button
-      class="text-text-muted hover:text-text-primary text-xs px-2 py-1 rounded bg-bg-secondary hover:bg-bg-panel border border-border-subtle"
-      onclick={onCancel}
-    >
-      Cancel
-    </button>
+    <div>
+      <div class="text-fg-default">{config.componentType}.{config.propertyKey}</div>
+      <div class="text-fg-muted">Entity {config.entityId} · {config.type}</div>
+    </div>
+    <IconButton name="x" title="Cancel" onclick={onCancel} />
   </div>
 
-  <div class="text-xs text-text-secondary mb-2">
-    Entity {config.entityId} • Type: {config.type}
-  </div>
-
-  {#if config.type === 'number'}
-    <NumberEditor 
-      value={config.value}
+  {#if config.type === "number"}
+    <NumberEditor
+      value={config.value as number}
       min={config.min}
       max={config.max}
       step={config.step}
-      onUpdate={handleUpdate}
+      onUpdate={onUpdate}
     />
-  {:else if config.type === 'string'}
-    <StringEditor 
-      value={config.value}
-      onUpdate={handleUpdate}
-    />
-  {:else if config.type === 'boolean'}
-    <BooleanEditor 
-      value={config.value}
-      onUpdate={handleUpdate}
-    />
-  {:else if config.type === 'vec2' || config.type === 'vec3' || config.type === 'vec4'}
-    <VectorEditor 
-      value={config.value}
+  {:else if config.type === "string"}
+    <StringEditor value={config.value as string} onUpdate={onUpdate} />
+  {:else if config.type === "boolean"}
+    <BooleanEditor value={config.value as boolean} onUpdate={onUpdate} />
+  {:else if config.type === "vec2" || config.type === "vec3" || config.type === "vec4"}
+    <VectorEditor
+      value={config.value as number[] | Float32Array}
       min={config.min}
       max={config.max}
       step={config.step}
-      resetValue={config.propertyKey === 'scale' ? 1 : 0}
-      onUpdate={handleUpdate}
+      resetValue={config.propertyKey === "scale" ? 1 : 0}
+      onUpdate={onUpdate}
     />
   {:else}
-    <div class="text-text-muted italic">
-      Property type "{config.type}" is not editable
-    </div>
+    <div class="text-fg-muted">Property type "{config.type}" is not editable</div>
   {/if}
-</div> 
+</div>

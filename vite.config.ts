@@ -1,12 +1,7 @@
-import { defineConfig } from 'vite'
-import { svelte } from '@sveltejs/vite-plugin-svelte'
-import UnoCSS from '@unocss/svelte-scoped/vite'
+import { defineConfig } from "vite";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
+import UnoCSS from "unocss/vite";
 
 export default defineConfig({
-  plugins: [
-    UnoCSS({
-      injectReset: '@unocss/reset/normalize.css',
-    }),
-    svelte(),
-  ],
-}) 
+  plugins: [UnoCSS(), svelte()],
+});

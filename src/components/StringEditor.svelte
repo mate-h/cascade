@@ -1,45 +1,29 @@
 <script lang="ts">
-  let { 
-    value, 
-    onUpdate 
+  let {
+    value,
+    onUpdate,
   }: {
     value: string;
     onUpdate: (newValue: string) => void;
   } = $props();
 
-  let currentValue = $state(value);
-
-  function handleInput(event: Event) {
-    const target = event.target as HTMLInputElement;
-    currentValue = target.value;
-    onUpdate(currentValue);
-  }
-
-  function handleKeydown(event: KeyboardEvent) {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      onUpdate(currentValue);
-    }
-  }
-
+  let currentValue = $derived(value);
   const inputId = `string-input-${Math.random().toString(36).slice(2, 9)}`;
+
+  const handleInput = (event: Event) => {
+    currentValue = (event.target as HTMLInputElement).value;
+    onUpdate(currentValue);
+  };
 </script>
 
-<div class="space-y-2">
-  <div class="flex items-center gap-2">
-    <label for={inputId} class="text-text-secondary text-xs min-w-12">Value:</label>
-    <input
-      id={inputId}
-      type="text"
-      bind:value={currentValue}
-      oninput={handleInput}
-      onkeydown={handleKeydown}
-      class="flex-1 px-2 py-1 text-xs bg-bg-secondary border border-border-subtle rounded text-text-primary focus:border-accent-blue focus:outline-none"
-      placeholder="Enter text..."
-    />
-  </div>
-
-  <div class="text-xs text-text-muted">
-    Length: {currentValue.length} characters
-  </div>
-</div> 
+<div class="flex items-center gap-2">
+  <label for={inputId} class="text-fg-muted min-w-12">Value</label>
+  <input
+    id={inputId}
+    type="text"
+    bind:value={currentValue}
+    oninput={handleInput}
+    class="ui-input flex-1"
+    placeholder="Enter text"
+  />
+</div>

@@ -12,32 +12,31 @@
 
   const components = $derived(getEntityComponents(entityId, ecs));
 
-  function handleClick() {
-    if (onSelect) {
-      onSelect();
-    }
-  }
+  const handleClick = () => {
+    onSelect?.();
+  };
 </script>
 
 <div
-  class="entity-card cursor-pointer transition-all duration-200"
-  class:entity-selected={isSelected}
-  class:entity-highlighted={isHighlighted}
-  class:hover:bg-bg-elevated={!isSelected}
+  class={[
+    "ui-row mb-1 cursor-pointer",
+    isSelected && "ui-row-selected",
+    isHighlighted && !isSelected && "ui-row-linked",
+  ]}
   data-entity-id={entityId}
   onclick={handleClick}
   role="button"
   tabindex="0"
   onkeydown={(e) => e.key === "Enter" && handleClick()}
 >
-  <div
-    class="text-accent-blue mb-1 flex items-center justify-between"
-  >
-    <span>Entity {entityId}</span>
+  <div class="flex items-center justify-between mb-1">
+    <span class={isSelected ? "text-fg-accent" : "text-fg-default"}>
+      Entity {entityId}
+    </span>
     {#if isSelected}
-      <span class="text-xs text-accent-green">Selected</span>
+      <span class="text-fg-success">Selected</span>
     {:else if isHighlighted}
-      <span class="text-xs text-accent-yellow">Dependency</span>
+      <span class="text-fg-attention">Linked</span>
     {/if}
   </div>
 

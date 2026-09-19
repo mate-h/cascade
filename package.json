@@ -9,18 +9,18 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@iconify-json/material-symbols": "^1.2.30",
-    "@sveltejs/vite-plugin-svelte": "^6.1.0",
-    "@unocss/preset-icons": "^66.3.3",
-    "@unocss/preset-uno": "^66.3.3",
-    "@unocss/reset": "^66.3.3",
-    "@unocss/svelte-scoped": "^66.3.3",
-    "@webgpu/types": "^0.1.64",
+    "@iconify-json/lucide": "^1.2.134",
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "@unocss/preset-icons": "^66.10.5",
+    "@unocss/preset-uno": "^66.10.5",
+    "@unocss/reset": "^66.10.5",
+    "@unocss/svelte-scoped": "^66.10.5",
+    "@webgpu/types": "^0.1.74",
     "primitive-geometry": "^2.11.0",
-    "svelte": "5.37.1",
-    "typescript": "~5.8.3",
-    "unocss": "^66.3.3",
-    "vite": "^7.0.6",
-    "wgpu-matrix": "^3.4.0"
+    "svelte": "5.57.1",
+    "typescript": "~7.0.2",
+    "unocss": "^66.10.5",
+    "vite": "^8.3.0",
+    "wgpu-matrix": "^3.4.2"
   }
 }

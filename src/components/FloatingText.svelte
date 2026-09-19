@@ -103,18 +103,18 @@ import { vec3, vec4 } from "wgpu-matrix";
           willChange: 'transform',
           fontSize: `${textLabel.fontSize}px`,
           color: textLabel.color,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          backgroundColor: 'var(--bgColor-muted)',
+          border: '1px solid var(--borderColor-default)',
           padding: `${textLabel.padding}px`,
-          borderRadius: `${textLabel.borderRadius}px`,
+          borderRadius: 'var(--borderRadius-medium)',
           fontFamily: 'Cascade Mono',
+          fontWeight: '400',
           whiteSpace: 'nowrap',
           pointerEvents: 'none',
           userSelect: 'none',
-          textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)'
         };
         if (isSelected) {
-          style.border = '2px solid #3b82f6';
-          style.boxShadow = '0 0 8px rgba(59, 130, 246, 0.5)';
+          style.border = '1px solid var(--fgColor-accent)';
         }
         Object.assign(textElement.style, style);
         const clipZ = calculateClipSpaceZ(worldPos, camera);

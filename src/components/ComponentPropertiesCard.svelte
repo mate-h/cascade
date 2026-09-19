@@ -12,229 +12,131 @@
     component,
   }: {
     selectedProperty: PropertyConfig | null;
-    onSelectProperty: (componentType: string, propertyKey: string, value: any) => void;
+    onSelectProperty: (componentType: string, propertyKey: string, value: unknown) => void;
     appState: AppState;
     componentType: string;
-    component: any;
+    component: Record<string, unknown>;
   } = $props();
 
-  // Helper function to check if a property is selected
-  const isPropertySelected = (componentType: string, propertyKey: string) =>
+  const isPropertySelected = (key: string) =>
     selectedProperty?.componentType === componentType &&
-    selectedProperty?.propertyKey === propertyKey;
+    selectedProperty?.propertyKey === key;
 
-  const formatValue = (value: any): string => {
-    if (value === null || value === undefined) {
-      return "null";
-    }
+  const formatValue = (value: unknown): string => {
+    if (value === null || value === undefined) return "null";
 
-    // Check if value is a vector (Float32Array or array with 2-4 components)
-    if ((Array.isArray(value) || value instanceof Float32Array) && value.length >= 2 && value.length <= 4) {
-      // first convert to regular array
-      const regularArray = Array.from(value);
+    if (
+      (Array.isArray(value) || value instanceof Float32Array) &&
+      value.length >= 2 &&
+      value.length <= 4
+    ) {
       const div = 10 ** CONFIG.DECIMAL_PRECISION;
-      return `[${regularArray.map(v => Math.round(v * div) / div).join(', ')}]`;
+      return `[${Array.from(value)
+        .map((v) => Math.round(v * div) / div)
+        .join(", ")}]`;
     }
 
     if (Array.isArray(value)) {
-      if (value.length === 0) return "[]";
-      return `[${value.length} items]`;
+      return value.length === 0 ? "[]" : `[${value.length} items]`;
     }
 
     if (typeof value === "object") {
       return `{${Object.keys(value).length} properties}`;
     }
 
-    if (typeof value === "string") {
-      return `"${value}"`;
-    }
-
-    if (typeof value === "number") {
-      return value.toString();
-    }
-
-    if (typeof value === "boolean") {
-      return value ? "true" : "false";
-    }
-
+    if (typeof value === "string") return `"${value}"`;
+    if (typeof value === "boolean") return value ? "true" : "false";
     return String(value);
   };
 
-  const isEntityReference = (value: any, key: string, ecs: any): boolean => {
-    if (typeof value !== "number" || !ecs.entities.has(value)) {
-      return false;
+  const typeLabel = (value: unknown): string => {
+    if (
+      (Array.isArray(value) || value instanceof Float32Array) &&
+      value.length >= 2 &&
+      value.length <= 4
+    ) {
+      return `vec${value.length}`;
     }
+    if (Array.isArray(value)) return `Array[${value.length}]`;
+    if (typeof value === "object" && value !== null) return "Object";
+    return typeof value;
+  };
 
-    const entityReferenceFields = [
-      "inputs",
-      "outputs",
-      "dependencies",
-      "targets",
-      "sources",
-    ];
-    return entityReferenceFields.includes(key.toLowerCase());
+  const isEntityReference = (value: unknown, key: string): boolean => {
+    if (typeof value !== "number" || !appState.ecs.entities.has(value)) return false;
+    return ["inputs", "outputs", "dependencies", "targets", "sources"].includes(
+      key.toLowerCase(),
+    );
   };
 </script>
 
-<div class="mb-3 bg-bg-elevated rounded border border-border-subtle overflow-hidden">
-  <div class="px-2 py-1 bg-bg-panel border-b border-border-subtle">
-    <h4 class="text-text-bright text-xs">
-      {componentType}
-    </h4>
+<div class="mb-2 rounded-md border border-border-muted overflow-hidden">
+  <div class="px-2 py-1.5 border-b border-border-muted bg-canvas-muted text-fg-default">
+    {componentType}
   </div>
 
-  <div class="overflow-x-auto">
-    <table class="w-full text-xs">
-      <thead>
-        <tr class="bg-bg-secondary">
-          <th
-            class="text-left p-1 text-text-secondary border-b border-border-subtle font-400"
-            >Property</th
-          >
-          <th
-            class="text-left p-1 text-text-secondary border-b border-border-subtle font-400"
-            >Value</th
-          >
-          <th
-            class="text-left p-1 text-text-secondary border-b border-border-subtle font-400"
-            >Type</th
-          >
-        </tr>
-      </thead>
-      <tbody>
-        {#each Object.entries(component) as [key, value]}
-          <tr
-            class:bg-accent-blue={isPropertySelected(componentType, key)}
-            class:cursor-pointer={isEditableProperty(value, componentType, key)}
-            class:hover:bg-opacity-80={isPropertySelected(componentType, key)}
-            class:hover:bg-gray-900={!isPropertySelected(componentType, key)}
-            onclick={() => onSelectProperty(componentType, key, value)}
-          >
-            <td
-              class="p-1 font-mono"
-              class:text-text-primary={isEditableProperty(value, componentType, key)}
-              class:text-text-muted={!isEditableProperty(value, componentType, key)}
-              class:text-white={isPropertySelected(componentType, key)}
-            >
-              <span
-              >
-                {key}
-              </span>
-            </td>
-            <td class="p-1 font-mono">
-              {#if isEntityReference(value, key, appState.ecs)}
-                <span
-                  class="cursor-pointer hover:underline"
-                  class:text-accent-blue={!isPropertySelected(componentType, key)}
-                  class:text-white={isPropertySelected(componentType, key)}
-                >
-                  Entity {value}
-                </span>
-              {:else if (Array.isArray(value) || value instanceof Float32Array) && value.length >= 2 && value.length <= 4}
-                <span
-                  class:text-text-primary={!isPropertySelected(componentType, key)}
-                  class:text-white={isPropertySelected(componentType, key)}
-                >{formatValue(value)}</span>
-              {:else if Array.isArray(value)}
-                <div
-                  class:text-text-muted={!isPropertySelected(componentType, key)}
-                  class:text-white={isPropertySelected(componentType, key)}
-                >
-                  {#if value.length === 0}
-                    <span
-                      class:text-text-secondary={!isPropertySelected(componentType, key)}
-                      class:text-white={isPropertySelected(componentType, key)}
-                    >[]</span>
-                  {:else}
-                    <details class="cursor-pointer">
-                      <summary
-                        class:text-accent-yellow={!isPropertySelected(componentType, key)}
-                        class:text-white={isPropertySelected(componentType, key)}
-                        class:hover:text-accent-orange={!isPropertySelected(componentType, key)}
-                      >
-                        [{value.length} items]
-                      </summary>
-                      <div class="mt-1 pl-2 border-l border-border-muted">
-                        {#each value as item, index}
-                          <div
-                            class="py-0.5"
-                            class:text-text-primary={!isPropertySelected(componentType, key)}
-                            class:text-white={isPropertySelected(componentType, key)}
-                          >
-                            <span
-                              class:text-text-muted={!isPropertySelected(componentType, key)}
-                              class:text-white={isPropertySelected(componentType, key)}
-                            >{index}:</span>
-                            {#if isEntityReference(item, key, appState.ecs)}
-                              <span
-                                class:text-accent-blue={!isPropertySelected(componentType, key)}
-                                class:text-white={isPropertySelected(componentType, key)}
-                              >Entity {item}</span>
-                            {:else}
-                              <span
-                                class:text-text-primary={!isPropertySelected(componentType, key)}
-                                class:text-white={isPropertySelected(componentType, key)}
-                              >
-                                {formatValue(item)}
-                              </span>
-                            {/if}
-                          </div>
-                        {/each}
-                      </div>
-                    </details>
-                  {/if}
+  <table class="w-full">
+    <thead>
+      <tr class="text-fg-muted text-left">
+        <th class="p-1.5 font-400">Property</th>
+        <th class="p-1.5 font-400">Value</th>
+        <th class="p-1.5 font-400">Type</th>
+      </tr>
+    </thead>
+    <tbody>
+      {#each Object.entries(component) as [key, value] (key)}
+        {@const selected = isPropertySelected(key)}
+        {@const editable = isEditableProperty(value, componentType, key)}
+        <tr
+          class={[
+            selected && "bg-accent-muted",
+            editable && "cursor-pointer hover:bg-canvas-muted",
+          ]}
+          onclick={() => onSelectProperty(componentType, key, value)}
+        >
+          <td class={["p-1.5", editable ? "text-fg-default" : "text-fg-muted"]}>
+            {key}
+          </td>
+          <td class="p-1.5">
+            {#if isEntityReference(value, key)}
+              <span class="entity-ref">Entity {value}</span>
+            {:else if Array.isArray(value) && value.length > 4}
+              <details>
+                <summary class="text-fg-attention cursor-pointer">[{value.length} items]</summary>
+                <div class="mt-1 pl-2 border-l border-border-muted">
+                  {#each value as item, index (`${key}-${index}`)}
+                    <div class="py-0.5 text-fg-default">
+                      <span class="text-fg-muted">{index}:</span>
+                      {#if isEntityReference(item, key)}
+                        <span class="entity-ref">Entity {item}</span>
+                      {:else}
+                        {formatValue(item)}
+                      {/if}
+                    </div>
+                  {/each}
                 </div>
-              {:else if typeof value === "object" && value !== null}
-                <details class="cursor-pointer">
-                  <summary
-                    class:text-accent-yellow={!isPropertySelected(componentType, key)}
-                    class:text-white={isPropertySelected(componentType, key)}
-                    class:hover:text-accent-orange={!isPropertySelected(componentType, key)}
-                  >
-                    {Object.keys(value).length} properties
-                  </summary>
-                  <div class="mt-1 pl-2 border-l border-border-muted">
-                    {#each Object.entries(value) as [subKey, subValue]}
-                      <div class="py-0.5">
-                        <span
-                          class="font-mono"
-                          class:text-accent-green={!isPropertySelected(componentType, key)}
-                          class:text-white={isPropertySelected(componentType, key)}
-                        >{subKey}:</span>
-                        <span
-                          class="ml-1"
-                          class:text-text-primary={!isPropertySelected(componentType, key)}
-                          class:text-white={isPropertySelected(componentType, key)}
-                        >{formatValue(subValue)}</span>
-                      </div>
-                    {/each}
-                  </div>
-                </details>
-              {:else}
-                <span
-                  class:text-text-primary={!isPropertySelected(componentType, key)}
-                  class:text-white={isPropertySelected(componentType, key)}
-                >{formatValue(value)}</span>
-              {/if}
-            </td>
-            <td
-              class="p-1"
-              class:text-text-muted={!isPropertySelected(componentType, key)}
-              class:text-white={isPropertySelected(componentType, key)}
-            >
-              {#if (Array.isArray(value) || value instanceof Float32Array) && value.length >= 2 && value.length <= 4}
-                vec{value.length}
-              {:else if Array.isArray(value)}
-                Array[{value.length}]
-              {:else if typeof value === "object" && value !== null}
-                Object
-              {:else}
-                {typeof value}
-              {/if}
-            </td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
-  </div>
-</div> 
+              </details>
+            {:else if typeof value === "object" && value !== null && !Array.isArray(value) && !(value instanceof Float32Array)}
+              <details>
+                <summary class="text-fg-attention cursor-pointer">
+                  {Object.keys(value).length} properties
+                </summary>
+                <div class="mt-1 pl-2 border-l border-border-muted">
+                  {#each Object.entries(value) as [subKey, subValue] (subKey)}
+                    <div class="py-0.5">
+                      <span class="text-fg-success">{subKey}:</span>
+                      <span class="ml-1 text-fg-default">{formatValue(subValue)}</span>
+                    </div>
+                  {/each}
+                </div>
+              </details>
+            {:else}
+              <span class="text-fg-default">{formatValue(value)}</span>
+            {/if}
+          </td>
+          <td class="p-1.5 text-fg-muted">{typeLabel(value)}</td>
+        </tr>
+      {/each}
+    </tbody>
+  </table>
+</div>
